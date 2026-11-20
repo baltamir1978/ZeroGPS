@@ -1,0 +1,44 @@
+{
+  "app_name": "ZeroGPS",
+  "package_name": "zerogps",
+  "bin_name": "zerogps",
+  "version": "0.2.0",
+  "description": "GPS tracks and live IGN maps for the CardputerZero LoRa+GPS cap",
+
+  "store": {
+    "summary": "Record GPX tracks and see them on a live IGN topographic map",
+    "description": "For the LoRa+GPS cap. Record your position as a GPX track from the GNSS receiver, save and review tracks, and see where you are on a live topographic map from Spain's IGN (tiles cached for offline use in the field). Pick Map or Tracks with the arrows and ENTER; ESC goes back, hold ESC to exit. Map data © Instituto Geográfico Nacional de España (CC-BY 4.0).",
+    "categories": ["Navigation"],
+    "screenshots": [
+      "screenshot/home.png"
+    ],
+    "icon": "store/icon.png",
+    "license": "MIT",
+    "source_repo": "https://github.com/baltamir1978/ZeroGPS",
+    "author": { "github": "baltamir1978", "display_name": "baltamir1978" },
+    "locales": {
+      "es": {
+        "title": "ZeroGPS",
+        "summary": "Graba tracks GPX y míralos en un mapa topográfico del IGN"
+      },
+      "zh-CN": {
+        "title": "ZeroGPS",
+        "summary": "记录 GPX 轨迹并在 IGN 地形图上查看"
+      },
+      "ja": {
+        "title": "ZeroGPS",
+        "summary": "GPXトラックを記録しIGNの地形図で表示"
+      }
+    },
+    "share_code": "ZGPS",
+    "permissions": {
+      "camera": false,
+      "microphone": false,
+      "imu": false,
+      "network": true,
+      "additional_hardware": true,
+      "background_service": false,
+      "external_display": false
+    }
+  }
+}
