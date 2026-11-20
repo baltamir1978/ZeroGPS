@@ -85,6 +85,23 @@ public:
         return map_view_;
     }
 
+    // --- Última posición conocida (se guarda en maps.conf) ---
+    struct LastPosition {
+        bool valid = false;
+        double lat = 0.0;
+        double lon = 0.0;
+    };
+    const LastPosition& last_position() const {
+        return last_position_;
+    }
+    // Desde el hilo de LVGL con cada fix (mapa, satélites): apunta la posición y la guarda de
+    // vez en cuando (al moverse bastante), no a cada segundo, por la tarjeta y la batería.
+    void remember(const gps::Fix& fix);
+    // Guarda ya la vista del mapa y la última posición (al salir del mapa y de la app).
+    void save_now() const {
+        save_settings();
+    }
+
     // --- Ajustes de mapas (se guardan en ~/.config/zerogps/maps.conf) ---
     const std::string& tiles_dir() const {
         return tiles_dir_;
@@ -109,6 +126,7 @@ private:
     void save_recording_locked();
     void load_settings();
     void save_settings() const;
+    void mark_saved();
 
     GnssReader gnss_;
     int users_ = 0;
@@ -124,6 +142,9 @@ private:
 
     gps::Track overlay_;
     MapView map_view_;
+    LastPosition last_position_;
+    LastPosition saved_position_; // la última que se escribió en maps.conf
+    std::chrono::steady_clock::time_point saved_at_{};
     std::string tiles_dir_;
     std::string bundled_tiles_dir_;
     bool online_ = false;

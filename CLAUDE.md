@@ -116,6 +116,21 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 
 ## Estado
 
+- **0.5.0 (20-nov-2026) — recuerda dónde estabas; descarga de los tres mapas; instalada, sin probar en el aparato.**
+  - `maps.conf` guarda `view=lat,lon,zoom` (dónde se quedó el mapa) y `last=lat,lon` (última
+    posición con fix). Se escribe al salir del mapa y de la app, y con fix al alejarse 200 m
+    de lo guardado (o cada 5 min si se mueve algo), no a cada segundo. Sin fix, el mapa abre
+    donde se quedó y pinta la última posición con el marcador en gris. Antes cada arranque
+    abría en Navacerrada.
+  - Descarga: fila «Mapa» con «Los tres» (por defecto; se bajan uno detrás de otro con el
+    mismo descargador y el progreso suma los tres), zoom mín. 5 y máx. «máx.» (cada mapa
+    hasta el suyo: 17/19/18) por defecto, radio 5 km por defecto: ~53.000 teselas y ~840 MB,
+    casi todo el satélite a z19 (a 10 km serían ~210.000, por encima del tope). Lo pidió Bruno.
+  - **GNSS: medido en el aparato** junto a la ventana: ~13 s hasta tener posición tras
+    encender los 5V, igual tras horas apagado que tras cortar 15 s (no pierde casi nada al
+    cortar); encendido, 1 s. Se probó dejarlo encendido unos minutos al salir y **Bruno no lo
+    quiere**: 15 s le parecen bien. No volver a proponerlo.
+
 - **0.4.1 (20-nov-2026) — zoom con Q / A.**
   - En el teclado del Cardputer (`linux,keymap*` del tca8418 en el device tree) la capa
     normal sólo tiene letras, números, Esc, Tab, Enter, espacio, mayúsculas, Ctrl y Alt:

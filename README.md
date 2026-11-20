@@ -38,13 +38,15 @@ encima del zoom con detalle se amplía el último nivel.
 - **Tracks**: graba tu recorrido en **GPX** (sigue grabando aunque salgas del mapa), lista los
   guardados en `~/Tracks`, los abre en el mapa y los borra.
 - **Mapas offline**: descarga una zona entera a la tarjeta para usarla en el monte sin
-  cobertura. Eliges el mapa, la zona (alrededor de donde tengas el mapa, con un radio de 1 a 50 km, o
+  cobertura. Eliges el mapa (o **los tres**, lo de por defecto), la zona (alrededor de donde tengas el mapa, con un radio de 1 a 50 km, o
   una zona completa ya hecha: Guadarrama, Gredos, Picos de Europa, Sierra Nevada, Pirineo
-  central, Cazorla, Montseny, Madrid), el **zoom mínimo y máximo** y **dónde guardarla** (la
+  central, Cazorla, Montseny, Madrid), el **zoom mínimo y máximo** (por defecto, todo: del 5 al máximo de cada mapa) y **dónde guardarla** (la
   tarjeta del sistema o una tarjeta/pincho montado). Antes de bajar nada ves **cuántas
   teselas son, cuánto ocuparán y cuánto espacio libre hay**: avisa si va justo y no deja
   empezar si no cabe. Lo que ya tengas no se vuelve a bajar, así que una descarga cortada se
   retoma repitiéndola.
+- **Recuerda dónde estabas**: el mapa se abre donde lo dejaste y, mientras el GPS busca
+  satélites (unos 13 s al encenderlo), enseña en gris tu última posición conocida.
 - **Modo online** (tecla `O` en el mapa): con wifi, baja sólo las teselas que faltan en
   pantalla. Viene apagado.
 
@@ -121,7 +123,7 @@ bajo CC-BY 4.0.
 
 ## Estado
 
-**0.4.1**: pantalla de satélites, zoom con Q/A; tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
+**0.5.0**: pantalla de satélites, zoom con Q/A, recuerda la última posición, descarga de los tres mapas; tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
 offline y modo online. Probado en el simulador; en el aparato ya se instala y coge posición
 (5 satélites junto a una ventana); falta probar ahí el mapa con teselas y grabar un track. El
 LoRa (SX1262) queda para más adelante.

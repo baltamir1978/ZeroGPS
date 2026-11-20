@@ -172,6 +172,7 @@ void SkyScreen::build_content(lv_obj_t* content) {
 
 void SkyScreen::refresh() {
     fix_ = gps_.fix();
+    gps_.remember(fix_);
     const auto colors = view::palette(view_model().is_dark_mode());
 
     // --- El cielo ---

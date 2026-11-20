@@ -66,6 +66,7 @@ MapScreen::~MapScreen() {
         lv_timer_delete(poll_timer_);
     }
     fetcher_.cancel();
+    gps_.save_now(); // dónde se quedó el mapa, para abrir ahí la próxima vez
     gps_.release();
 }
 
@@ -244,6 +245,7 @@ void MapScreen::update_timer() {
 
 void MapScreen::poll() {
     fix_ = gps_.fix();
+    gps_.remember(fix_);
     auto& view = gps_.map_view();
     if (fix_.valid && view.follow) {
         view.lat = fix_.lat;
@@ -261,8 +263,14 @@ void MapScreen::redraw(bool force) {
     const auto& view = gps_.map_view();
     const long long cx = std::llround(gx(view.lon));
     const long long cy = std::llround(gy(view.lat));
-    const long long fx = fix_.valid ? std::llround(gx(fix_.lon)) : 0;
-    const long long fy = fix_.valid ? std::llround(gy(fix_.lat)) : 0;
+    // Sin fix se pinta la última posición conocida (en gris): al volver a encender el GPS
+    // sabes dónde estabas y el mapa no salta a otro sitio.
+    const auto& last = gps_.last_position();
+    const bool have_pos = fix_.valid || last.valid;
+    const double pos_lat = fix_.valid ? fix_.lat : last.lat;
+    const double pos_lon = fix_.valid ? fix_.lon : last.lon;
+    const long long fx = have_pos ? std::llround(gx(pos_lon)) : 0;
+    const long long fy = have_pos ? std::llround(gy(pos_lat)) : 0;
     const std::uint64_t revision = gps_.track_revision();
 
     const bool moved = std::llabs(cx - drawn_cx_) >= kMinMovePx ||
@@ -288,7 +296,9 @@ void MapScreen::redraw(bool force) {
     draw_tiles();
     update_lines();
 
-    if (fix_.valid) {
+    if (have_pos) {
+        const auto colors = view::palette(view_model().is_dark_mode());
+        lv_obj_set_style_bg_color(marker_, fix_.valid ? colors.primary : lv_color_hex(0x9E9E9E), 0);
         const long long px = fx - cx + kCx;
         const long long py = fy - cy + kCy;
         if (px >= -6 && px < kW + 6 && py >= -6 && py < kH + 6) {
@@ -450,7 +460,8 @@ void MapScreen::update_labels() {
         std::snprintf(buf, sizeof(buf), "%.5f %.5f  %.0f m  z%d  %d sat%s", fix_.lat, fix_.lon,
                       fix_.alt_m, view.zoom, fix_.satellites, view.follow ? "" : "  · libre");
     } else {
-        std::snprintf(buf, sizeof(buf), "Buscando satélites…  z%d%s", view.zoom,
+        std::snprintf(buf, sizeof(buf), "Buscando satélites…%s  z%d%s",
+                      gps_.last_position().valid ? " (gris: última posición)" : "", view.zoom,
                       view.follow ? "" : "  · libre");
     }
     set_text(status_, buf);

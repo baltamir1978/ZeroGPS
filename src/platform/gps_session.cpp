@@ -54,6 +54,13 @@ std::string system_time_stem() {
     return buf;
 }
 
+// La posición se reescribe en maps.conf al alejarse esto de la última guardada (o cada
+// rato si se mueve algo): si se acaba la batería, el mapa vuelve a abrirse cerca de donde
+// estabas.
+constexpr double kSaveDistanceM = 200.0;
+constexpr double kSaveMinMoveM = 20.0;
+constexpr auto kSavePositionEvery = std::chrono::minutes(5);
+
 // Escribe en un temporal y lo renombra: un corte a mitad no deja un GPX roto.
 void write_gpx_atomic(const std::string& path, const gps::Track& track) {
     const std::string tmp = path + ".tmp";
@@ -75,6 +82,7 @@ GpsSession::~GpsSession() {
     if (recording()) {
         stop_recording();
     }
+    save_settings(); // la vista y la última posición, para abrir ahí la próxima vez
     // El hilo del GNSS llama a on_fix(): tiene que haber acabado antes de que se destruyan
     // el mutex y el grabador.
     gnss_.stop_and_join();
@@ -207,6 +215,26 @@ void GpsSession::set_tiles_dir(const std::string& dir) {
     save_settings();
 }
 
+void GpsSession::remember(const gps::Fix& fix) {
+    if (!fix.valid) {
+        return;
+    }
+    last_position_ = {true, fix.lat, fix.lon};
+    const double moved = saved_position_.valid
+                             ? gps::distance_m(saved_position_.lat, saved_position_.lon, fix.lat, fix.lon)
+                             : kSaveDistanceM;
+    const bool due = Clock::now() - saved_at_ >= kSavePositionEvery && moved >= kSaveMinMoveM;
+    if (moved >= kSaveDistanceM || due) {
+        save_settings();
+        mark_saved();
+    }
+}
+
+void GpsSession::mark_saved() {
+    saved_position_ = last_position_;
+    saved_at_ = Clock::now();
+}
+
 void GpsSession::set_online(bool on) {
     if (on == online_) {
         return;
@@ -254,8 +282,27 @@ void GpsSession::load_settings() {
             map::layer_from_key(value, layer_);
         } else if (key == "online") {
             online_ = (value == "yes" || value == "true" || value == "1");
+        } else if (key == "view" || key == "last") {
+            // "lat,lon[,zoom]"
+            double lat = 0.0;
+            double lon = 0.0;
+            int zoom = 0;
+            const int n = std::sscanf(value.c_str(), "%lf,%lf,%d", &lat, &lon, &zoom);
+            if (n < 2 || lat < -85.0 || lat > 85.0 || lon < -180.0 || lon > 180.0) {
+                continue;
+            }
+            if (key == "view") {
+                map_view_.lat = lat;
+                map_view_.lon = lon;
+                if (n == 3 && zoom >= 5 && zoom <= 19) {
+                    map_view_.zoom = zoom;
+                }
+            } else {
+                last_position_ = {true, lat, lon};
+            }
         }
     }
+    mark_saved();
 }
 
 void GpsSession::save_settings() const {
@@ -270,6 +317,13 @@ void GpsSession::save_settings() const {
     out << "tiles_dir=" << tiles_dir_ << "\n";
     out << "online=" << (online_ ? "yes" : "no") << "\n";
     out << "layer=" << map::layer_info(layer_).key << "\n";
+    char buf[96];
+    std::snprintf(buf, sizeof(buf), "view=%.6f,%.6f,%d\n", map_view_.lat, map_view_.lon, map_view_.zoom);
+    out << buf;
+    if (last_position_.valid) {
+        std::snprintf(buf, sizeof(buf), "last=%.6f,%.6f\n", last_position_.lat, last_position_.lon);
+        out << buf;
+    }
 }
 
 } // namespace platform

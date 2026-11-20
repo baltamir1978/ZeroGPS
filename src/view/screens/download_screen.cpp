@@ -30,8 +30,6 @@ const lv_color_t kOkColor = lv_color_hex(0x43A047);
 
 DownloadScreen::DownloadScreen(viewmodel::BaseViewModel& view_model, app::AssetManager& assets)
     : BaseScreen(view_model, assets), gps_(view_model.gps()) {
-    layer_ = gps_.layer();
-    zmax_ = std::min(zmax_, map::layer_info(layer_).max_zoom);
     storages_ = platform::storage_options();
     storage_ = -1;
     for (std::size_t i = 0; i < storages_.size(); ++i) {
@@ -128,8 +126,49 @@ std::string DownloadScreen::zone_name() const {
     return map::zone_presets()[static_cast<std::size_t>(zone_ - 1)].name;
 }
 
+std::vector<map::MapLayer> DownloadScreen::chosen_layers() const {
+    std::vector<map::MapLayer> layers;
+    if (layer_choice_ >= map::kLayerCount) {
+        for (int i = 0; i < map::kLayerCount; ++i) {
+            layers.push_back(static_cast<map::MapLayer>(i));
+        }
+    } else {
+        layers.push_back(static_cast<map::MapLayer>(layer_choice_));
+    }
+    return layers;
+}
+
+std::string DownloadScreen::layers_name() const {
+    if (layer_choice_ >= map::kLayerCount) {
+        return "Los tres";
+    }
+    return map::layer_info(static_cast<map::MapLayer>(layer_choice_)).name;
+}
+
+int DownloadScreen::zmax_for(map::MapLayer layer) const {
+    return std::min(zmax_, map::layer_info(layer).max_zoom);
+}
+
+int DownloadScreen::top_zoom() const {
+    int top = map::kDownloadZoomMin;
+    for (const auto layer : chosen_layers()) {
+        top = std::max(top, map::layer_info(layer).max_zoom);
+    }
+    return top;
+}
+
 void DownloadScreen::recompute() {
-    plan_ = map::plan_zone(current_box(), zmin_, zmax_, layer_);
+    plan_ = map::ZonePlan{};
+    plan_.zmin = zmin_;
+    plan_.zmax = std::min(zmax_, top_zoom());
+    for (const auto layer : chosen_layers()) {
+        const auto one = map::plan_zone(current_box(), zmin_, zmax_for(layer), layer);
+        plan_.tiles += one.tiles;
+        plan_.bytes += one.bytes;
+        for (std::size_t z = 0; z < plan_.per_zoom.size(); ++z) {
+            plan_.per_zoom[z] += one.per_zoom[z];
+        }
+    }
     free_ = platform::free_bytes(storages_[static_cast<std::size_t>(storage_)].tiles_dir);
     const bool fits = free_ < 0 || plan_.bytes < free_;
     can_start_ = plan_.tiles > 0 && plan_.tiles <= map::kMaxTilesPerDownload && fits;
@@ -139,12 +178,14 @@ void DownloadScreen::change(int delta) {
     const int zones = static_cast<int>(map::zone_presets().size()) + 1;
     switch (row_) {
         case 0: {
-            const int n = map::kLayerCount;
-            layer_ = static_cast<map::MapLayer>((static_cast<int>(layer_) + delta + n) % n);
-            // Cada mapa tiene su zoom máximo útil.
-            const int top = map::layer_info(layer_).max_zoom;
-            zmax_ = std::min(zmax_, top);
-            zmin_ = std::min(zmin_, zmax_);
+            // Si el zoom máx. estaba en «máx.», sigue en «máx.» con el mapa nuevo.
+            const bool at_top = zmax_ >= top_zoom();
+            const int n = map::kLayerCount + 1;
+            layer_choice_ = (layer_choice_ + delta + n) % n;
+            if (at_top) {
+                zmax_ = map::kDownloadZoomMax;
+            }
+            zmin_ = std::min(zmin_, top_zoom());
             break;
         }
         case 1:
@@ -156,10 +197,10 @@ void DownloadScreen::change(int delta) {
             }
             break;
         case 3:
-            zmin_ = std::clamp(zmin_ + delta, map::kDownloadZoomMin, zmax_);
+            zmin_ = std::clamp(zmin_ + delta, map::kDownloadZoomMin, std::min(zmax_, top_zoom()));
             break;
         case 4:
-            zmax_ = std::clamp(zmax_ + delta, zmin_, map::layer_info(layer_).max_zoom);
+            zmax_ = std::clamp(std::min(zmax_, top_zoom()) + delta, zmin_, top_zoom());
             break;
         case 5: {
             const int n = static_cast<int>(storages_.size());
@@ -176,16 +217,24 @@ void DownloadScreen::start() {
     if (!can_start_) {
         return;
     }
-    const std::string dir = storages_[static_cast<std::size_t>(storage_)].tiles_dir;
-    gps_.set_tiles_dir(dir); // el mapa buscará primero aquí
-    downloader_.reset();
-    if (!downloader_.start(map::zone_tiles(current_box(), plan_.zmin, plan_.zmax, layer_), dir, layer_)) {
-        return;
-    }
+    gps_.set_tiles_dir(storages_[static_cast<std::size_t>(storage_)].tiles_dir); // el mapa buscará primero aquí
+    job_layers_ = chosen_layers();
+    job_index_ = 0;
+    job_box_ = current_box();
+    job_total_ = static_cast<std::size_t>(plan_.tiles);
+    acc_ = platform::TileDownloader::Progress{};
     state_ = State::Downloading;
+    start_next_layer();
     if (!timer_) {
         timer_ = lv_timer_create(timer_cb, 500, this);
     }
+}
+
+void DownloadScreen::start_next_layer() {
+    current_layer_ = job_layers_[job_index_];
+    downloader_.reset();
+    downloader_.start(map::zone_tiles(job_box_, zmin_, zmax_for(current_layer_), current_layer_),
+                      storages_[static_cast<std::size_t>(storage_)].tiles_dir, current_layer_);
 }
 
 bool DownloadScreen::handle_key(uint32_t key) {
@@ -256,11 +305,22 @@ void DownloadScreen::refresh() {
     char buf[160];
 
     if (state_ == State::Downloading && !downloader_.running()) {
-        state_ = State::Result;
-        if (timer_) {
-            lv_timer_delete(timer_);
-            timer_ = nullptr;
+        const auto p = downloader_.progress();
+        if (p.finished && !p.cancelled && p.error.empty() && job_index_ + 1 < job_layers_.size()) {
+            // Esta capa ha terminado bien: se suma y se pasa a la siguiente.
+            acc_.done += p.done;
+            acc_.skipped += p.skipped;
+            acc_.failed += p.failed;
+            acc_.bytes += p.bytes;
+            ++job_index_;
+            start_next_layer();
+        } else {
+            state_ = State::Result;
         }
+    }
+    if (state_ == State::Result && timer_) {
+        lv_timer_delete(timer_);
+        timer_ = nullptr;
     }
 
     const bool setup = state_ == State::Setup;
@@ -282,8 +342,7 @@ void DownloadScreen::refresh() {
         for (int i = 0; i < 3; ++i) {
             lv_obj_set_y(info_[i], kInfoTop + i * kInfoLine);
         }
-        std::snprintf(buf, sizeof(buf), "‹ %s ›", map::layer_info(layer_).name);
-        lv_label_set_text(row_values_[0], buf);
+        lv_label_set_text(row_values_[0], ("‹ " + layers_name() + " ›").c_str());
         lv_label_set_text(row_values_[1], ("‹ " + zone_name() + " ›").c_str());
         if (zone_ == 0) {
             std::snprintf(buf, sizeof(buf), "‹ %d km ›", kRadiiKm[static_cast<std::size_t>(radius_index_)]);
@@ -293,7 +352,12 @@ void DownloadScreen::refresh() {
         lv_label_set_text(row_values_[2], buf);
         std::snprintf(buf, sizeof(buf), "‹ %d ›", zmin_);
         lv_label_set_text(row_values_[3], buf);
-        std::snprintf(buf, sizeof(buf), "‹ %d ›  (máx. %d)", zmax_, map::layer_info(layer_).max_zoom);
+        if (zmax_ >= top_zoom()) {
+            // Cada mapa hasta su máximo (topo 17, base 18, satélite 19).
+            std::snprintf(buf, sizeof(buf), "‹ máx. › (%d)", top_zoom());
+        } else {
+            std::snprintf(buf, sizeof(buf), "‹ %d ›  (máx. %d)", zmax_, top_zoom());
+        }
         lv_label_set_text(row_values_[4], buf);
         lv_label_set_text(row_values_[5], ("‹ " + storages_[static_cast<std::size_t>(storage_)].label + " ›").c_str());
 
@@ -340,8 +404,14 @@ void DownloadScreen::refresh() {
         return;
     }
 
-    // Descargando o resultado.
-    const auto p = downloader_.progress();
+    // Descargando o resultado: lo de las capas terminadas más lo de la que va.
+    const auto cur = downloader_.progress();
+    platform::TileDownloader::Progress p = cur;
+    p.done += acc_.done;
+    p.skipped += acc_.skipped;
+    p.failed += acc_.failed;
+    p.bytes += acc_.bytes;
+    p.total = std::max(job_total_, p.done + p.skipped + p.failed);
     const std::size_t processed = p.done + p.skipped + p.failed;
     const int permille = p.total ? static_cast<int>(1000.0 * processed / p.total) : 0;
     lv_obj_remove_flag(bar_, LV_OBJ_FLAG_HIDDEN);
@@ -354,10 +424,16 @@ void DownloadScreen::refresh() {
     lv_obj_set_y(info_[2], 50 + kInfoLine);
 
     if (state_ == State::Downloading) {
-        std::snprintf(buf, sizeof(buf), "Bajando %s · %s (z%d–%d)", map::layer_info(layer_).name,
-                      zone_name().c_str(), plan_.zmin, plan_.zmax);
+        if (job_layers_.size() > 1) {
+            std::snprintf(buf, sizeof(buf), "Bajando %s (%zu/%zu) · %s (z%d–%d)",
+                          map::layer_info(current_layer_).name, job_index_ + 1, job_layers_.size(),
+                          zone_name().c_str(), zmin_, zmax_for(current_layer_));
+        } else {
+            std::snprintf(buf, sizeof(buf), "Bajando %s · %s (z%d–%d)", map::layer_info(current_layer_).name,
+                          zone_name().c_str(), zmin_, zmax_for(current_layer_));
+        }
     } else if (p.finished) {
-        std::snprintf(buf, sizeof(buf), "✔ Hecho: %s · %s", map::layer_info(layer_).name, zone_name().c_str());
+        std::snprintf(buf, sizeof(buf), "✔ Hecho: %s · %s", layers_name().c_str(), zone_name().c_str());
     } else if (p.cancelled) {
         std::snprintf(buf, sizeof(buf), "Cancelado (lo bajado se queda)");
     } else {
