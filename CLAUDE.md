@@ -124,6 +124,16 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 
 ## Estado
 
+- **Tienda (20-nov-2026):** 0.5.0 enviada como **IGN GPS** en
+  [CardputerZero/packages#568](https://github.com/CardputerZero/packages/pull/568); CI en verde
+  (`validate`, `capture`), **esperando la revisión** de un mantenedor (primera publicación).
+  Vídeo en el aparato enlazado en el PR, subido como release `video-0.5.0` de este repo (sin
+  ubicación ni audio; se ve la zona de casa en el mapa: Bruno lo aceptó). Para publicar hubo
+  que sincronizar el fork `baltamir1978/packages`: iba 49 commits por detrás con cambios en
+  `.github/workflows` y el token de `czdev` (sólo `public_repo`) no puede crear ramas así
+  (404). Se arregla con `gh repo sync baltamir1978/packages --source CardputerZero/packages`
+  (el `gh` del portátil tiene ya el permiso `workflow`).
+
 - **0.5.0 (20-nov-2026) — recuerda dónde estabas; descarga de los tres mapas; instalada, sin probar en el aparato.**
   - `maps.conf` guarda `view=lat,lon,zoom` (dónde se quedó el mapa) y `last=lat,lon` (última
     posición con fix). Se escribe al salir del mapa y de la app, y con fix al alejarse 200 m
