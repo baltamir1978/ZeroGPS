@@ -111,8 +111,16 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 - Versión en `project(... VERSION x.y.z)` de `CMakeLists.txt` y en `app-builder.json` (a la vez).
 - El `.deb` se copia a `~/Documentos/ZeroGPS-<versión>.deb`, sustituyendo al anterior.
 - Commit en `main` con mensaje en español que empieza por la versión, y push.
-- `app-builder.json` tiene la ficha (`czdev publish`) pero **no está publicada** (y no está
-  previsto: va sola). Icono: `Tools/generar_icono.py` (mapa plegado con chincheta).
+- **Tienda**: `app-builder.json` es la ficha (`czdev publish --deb dist/…deb`, desde
+  `../AppBuilder`; sesión en `~/.czdev/credentials`). Título **IGN GPS** (`app_name`; el
+  paquete sigue siendo `zerogps`), código `ZGPS`, categorías «Hardware & IoT» y «Lifestyle»
+  (la lista es cerrada: «Navigation» no vale), capturas de **320×170 exactos** (las
+  recortadas del Xvfb llevan desplazamiento de página: `convert … +repage`). La primera
+  publicación la revisa una persona con un vídeo en el aparato en el PR; las siguientes
+  versiones se aceptan solas. Icono: `Tools/generar_icono.py` (mapa plegado con chincheta).
+- Vídeos y capturas para publicar: **sin la ubicación** (los del Pixel la llevan en los
+  metadatos: `ffmpeg -map_metadata -1 -an`). Los originales no se suben al repo
+  (`*.mp4` en `.gitignore`).
 
 ## Estado
 

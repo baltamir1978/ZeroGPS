@@ -149,3 +149,7 @@ temp/
 
 # TODOS
 TODO
+
+# Vídeos del móvil para la tienda (llevan la ubicación en los metadatos)
+*.mp4
+*.mov

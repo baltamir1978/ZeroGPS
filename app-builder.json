@@ -1,19 +1,23 @@
 {
-  "app_name": "ZeroGPS",
+  "app_name": "IGN GPS",
   "package_name": "zerogps",
   "bin_name": "zerogps",
   "version": "0.5.0",
-  "description": "GPS with Spain's IGN maps (topographic, satellite, base) for the CardputerZero LoRa+GPS cap",
+  "description": "GPS with Spain's IGN maps (topographic, satellite, base), sky view, GPX tracks and offline maps for the Cap LoRa-1262",
   "store": {
-    "summary": "Record GPX tracks and see them on a live IGN topographic map",
-    "description": "For the LoRa+GPS cap. Record your position as a GPX track from the GNSS receiver, save and review tracks, and see where you are on a live topographic map from Spain's IGN (tiles cached for offline use in the field). Pick Map or Tracks with the arrows and ENTER; ESC goes back, hold ESC to exit. Map data © Instituto Geográfico Nacional de España (CC-BY 4.0).",
+    "summary": "GPS with Spain's IGN maps: live position, satellites, GPX tracks, offline",
+    "description": "For the Cap LoRa-1262 (LoRa + GNSS). Spain only: the maps come from Spain's Instituto Geográfico Nacional (IGN), and the interface is in Spanish.\n\n- Map: your position on the IGN topographic map, PNOA aerial imagery or IGN Base (key M), with the track you are recording and any track you open. Q/A zoom, arrows pan, ENTER centres on you. It remembers where you were and shows your last known position while the GNSS gets a fix (~13 s).\n- Satellites: sky plot with every satellite by constellation (GPS, Galileo, GLONASS, BeiDou, QZSS, SBAS), fix type, latitude, longitude, altitude, approximate accuracy, HDOP/VDOP and UTC time.\n- Tracks: record GPX (keeps recording on other screens), list, open on the map, delete.\n- Offline maps: download an area (radius or ready-made mountain ranges) for the three maps at once, with tile count, size and free space shown before starting. Online mode (key O) fetches only the missing tiles over Wi-Fi.\n\nBattery friendly: the GNSS is only powered while the map or the satellites are open (or while recording), and the map refresh rate depends on the zoom. Ships with Sierra de Guadarrama tiles.\n\nMap data © Instituto Geográfico Nacional de España (CC-BY 4.0).",
     "categories": [
-      "Navigation"
+      "Hardware & IoT",
+      "Lifestyle"
     ],
     "screenshots": [
       "screenshot/map.png",
       "screenshot/satellite.png",
-      "screenshot/download.png"
+      "screenshot/sky.png",
+      "screenshot/download.png",
+      "screenshot/tracks.png",
+      "screenshot/home.png"
     ],
     "icon": "store/icon.png",
     "license": "MIT",
@@ -24,16 +28,16 @@
     },
     "locales": {
       "es": {
-        "title": "ZeroGPS",
-        "summary": "Graba tracks GPX y míralos en un mapa topográfico del IGN"
+        "title": "IGN GPS",
+        "summary": "GPS con mapas del IGN: posición, satélites, tracks GPX y mapas offline"
       },
       "zh-CN": {
-        "title": "ZeroGPS",
-        "summary": "记录 GPX 轨迹并在 IGN 地形图上查看"
+        "title": "IGN GPS",
+        "summary": "西班牙 IGN 地图 GPS：实时位置、卫星、GPX 轨迹、离线地图"
       },
       "ja": {
-        "title": "ZeroGPS",
-        "summary": "GPXトラックを記録しIGNの地形図で表示"
+        "title": "IGN GPS",
+        "summary": "スペインIGN地図のGPS：現在地・衛星・GPXトラック・オフライン地図"
       }
     },
     "share_code": "ZGPS",
