@@ -215,6 +215,14 @@ void GpsSession::set_online(bool on) {
     save_settings();
 }
 
+void GpsSession::set_layer(map::MapLayer layer) {
+    if (layer == layer_) {
+        return;
+    }
+    layer_ = layer;
+    save_settings();
+}
+
 std::vector<std::string> GpsSession::tile_roots() const {
     std::vector<std::string> roots{tiles_dir_};
     for (const auto& option : storage_options()) {
@@ -242,6 +250,8 @@ void GpsSession::load_settings() {
         const std::string value = trim(line.substr(eq + 1));
         if (key == "tiles_dir" && !value.empty()) {
             tiles_dir_ = value;
+        } else if (key == "layer") {
+            map::layer_from_key(value, layer_);
         } else if (key == "online") {
             online_ = (value == "yes" || value == "true" || value == "1");
         }
@@ -259,6 +269,7 @@ void GpsSession::save_settings() const {
     out << "# Ajustes de mapas de ZeroGPS (los cambia la app)\n";
     out << "tiles_dir=" << tiles_dir_ << "\n";
     out << "online=" << (online_ ? "yes" : "no") << "\n";
+    out << "layer=" << map::layer_info(layer_).key << "\n";
 }
 
 } // namespace platform

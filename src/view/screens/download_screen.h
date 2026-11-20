@@ -17,8 +17,8 @@
 namespace screen {
 
 /**
- * Mapas offline: elegir una zona (alrededor de donde está el mapa, o una zona completa ya
- * hecha), los zooms y dónde guardarla; antes de bajar nada se ve cuántas teselas son, cuánto
+ * Mapas offline: elegir el mapa (topográfico, satélite o IGN Base), una zona (alrededor de
+ * donde está el mapa, o una zona completa ya hecha), los zooms y dónde guardarla; antes de bajar nada se ve cuántas teselas son, cuánto
  * ocuparán y cuánto sitio libre hay, y no deja empezar si no cabe o si pasa del tope.
  * Lo ya bajado se salta, así que repetir una descarga sólo baja lo que falta.
  */
@@ -32,7 +32,7 @@ protected:
 
 private:
     enum class State { Setup, Downloading, Result };
-    static constexpr int kRows = 5;
+    static constexpr int kRows = 6;
 
     bool handle_key(uint32_t key);
     bool handle_back();
@@ -51,7 +51,8 @@ private:
     std::vector<platform::StorageOption> storages_;
 
     State state_ = State::Setup;
-    int row_ = 0;
+    int row_ = 1; // se empieza en «Zona»; la capa sale de la que tenga el mapa
+    map::MapLayer layer_ = map::MapLayer::Topo;
     int zone_ = 0; // 0 = alrededor del mapa; 1.. = zone_presets()[zone_-1]
     int radius_index_ = 3;
     int zmin_ = 8;

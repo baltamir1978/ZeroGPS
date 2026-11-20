@@ -93,6 +93,10 @@ public:
     bool online() const {
         return online_;
     }
+    map::MapLayer layer() const {
+        return layer_;
+    }
+    void set_layer(map::MapLayer layer);
     void set_online(bool on);
     // Carpetas donde buscar teselas, en orden: la elegida, las demás tarjetas, las de la app.
     std::vector<std::string> tile_roots() const;
@@ -123,6 +127,7 @@ private:
     std::string tiles_dir_;
     std::string bundled_tiles_dir_;
     bool online_ = false;
+    map::MapLayer layer_ = map::MapLayer::Topo;
 };
 
 } // namespace platform

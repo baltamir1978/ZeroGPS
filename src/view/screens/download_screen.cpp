@@ -15,9 +15,9 @@ namespace {
 
 constexpr int32_t kMargin = 6;
 constexpr int32_t kW = view::kScreenWidth;
-constexpr int32_t kRowHeight = 16;
-constexpr int32_t kInfoTop = 2 + 5 * kRowHeight + 3;
-constexpr int32_t kInfoLine = 13;
+constexpr int32_t kRowHeight = 14;
+constexpr int32_t kInfoTop = 2 + 6 * kRowHeight + 2;
+constexpr int32_t kInfoLine = 12;
 constexpr std::array<int, 8> kRadiiKm = {1, 2, 5, 10, 15, 20, 30, 50};
 // Si la descarga se come más de esta parte del espacio libre, se avisa (pero se deja).
 constexpr double kWarnFreeShare = 0.8;
@@ -30,6 +30,8 @@ const lv_color_t kOkColor = lv_color_hex(0x43A047);
 
 DownloadScreen::DownloadScreen(viewmodel::BaseViewModel& view_model, app::AssetManager& assets)
     : BaseScreen(view_model, assets), gps_(view_model.gps()) {
+    layer_ = gps_.layer();
+    zmax_ = std::min(zmax_, map::layer_info(layer_).max_zoom);
     storages_ = platform::storage_options();
     storage_ = -1;
     for (std::size_t i = 0; i < storages_.size(); ++i) {
@@ -60,8 +62,8 @@ void DownloadScreen::build_content(lv_obj_t* content) {
     const lv_font_t* value_font = assets().load_standard_font(12, app::StandardFontWeight::Regular);
     const lv_font_t* info_font = assets().load_standard_font(11, app::StandardFontWeight::Regular);
 
-    static constexpr std::array<const char*, kRows> kKeys = {"Zona", "Radio", "Zoom mín.", "Zoom máx.",
-                                                             "Guardar en"};
+    static constexpr std::array<const char*, kRows> kKeys = {"Mapa", "Zona", "Radio", "Zoom mín.",
+                                                             "Zoom máx.", "Guardar en"};
     for (int i = 0; i < kRows; ++i) {
         auto* box = lv_obj_create(content);
         lv_obj_remove_style_all(box);
@@ -127,7 +129,7 @@ std::string DownloadScreen::zone_name() const {
 }
 
 void DownloadScreen::recompute() {
-    plan_ = map::plan_zone(current_box(), zmin_, zmax_);
+    plan_ = map::plan_zone(current_box(), zmin_, zmax_, layer_);
     free_ = platform::free_bytes(storages_[static_cast<std::size_t>(storage_)].tiles_dir);
     const bool fits = free_ < 0 || plan_.bytes < free_;
     can_start_ = plan_.tiles > 0 && plan_.tiles <= map::kMaxTilesPerDownload && fits;
@@ -136,21 +138,30 @@ void DownloadScreen::recompute() {
 void DownloadScreen::change(int delta) {
     const int zones = static_cast<int>(map::zone_presets().size()) + 1;
     switch (row_) {
-        case 0:
+        case 0: {
+            const int n = map::kLayerCount;
+            layer_ = static_cast<map::MapLayer>((static_cast<int>(layer_) + delta + n) % n);
+            // Cada mapa tiene su zoom máximo útil.
+            const int top = map::layer_info(layer_).max_zoom;
+            zmax_ = std::min(zmax_, top);
+            zmin_ = std::min(zmin_, zmax_);
+            break;
+        }
+        case 1:
             zone_ = (zone_ + delta + zones) % zones;
             break;
-        case 1:
+        case 2:
             if (zone_ == 0) {
                 radius_index_ = std::clamp(radius_index_ + delta, 0, static_cast<int>(kRadiiKm.size()) - 1);
             }
             break;
-        case 2:
+        case 3:
             zmin_ = std::clamp(zmin_ + delta, map::kDownloadZoomMin, zmax_);
             break;
-        case 3:
-            zmax_ = std::clamp(zmax_ + delta, zmin_, map::kDownloadZoomMax);
+        case 4:
+            zmax_ = std::clamp(zmax_ + delta, zmin_, map::layer_info(layer_).max_zoom);
             break;
-        case 4: {
+        case 5: {
             const int n = static_cast<int>(storages_.size());
             storage_ = (storage_ + delta + n) % n;
             break;
@@ -168,7 +179,7 @@ void DownloadScreen::start() {
     const std::string dir = storages_[static_cast<std::size_t>(storage_)].tiles_dir;
     gps_.set_tiles_dir(dir); // el mapa buscará primero aquí
     downloader_.reset();
-    if (!downloader_.start(map::zone_tiles(current_box(), plan_.zmin, plan_.zmax), dir)) {
+    if (!downloader_.start(map::zone_tiles(current_box(), plan_.zmin, plan_.zmax, layer_), dir, layer_)) {
         return;
     }
     state_ = State::Downloading;
@@ -271,18 +282,20 @@ void DownloadScreen::refresh() {
         for (int i = 0; i < 3; ++i) {
             lv_obj_set_y(info_[i], kInfoTop + i * kInfoLine);
         }
-        lv_label_set_text(row_values_[0], ("‹ " + zone_name() + " ›").c_str());
+        std::snprintf(buf, sizeof(buf), "‹ %s ›", map::layer_info(layer_).name);
+        lv_label_set_text(row_values_[0], buf);
+        lv_label_set_text(row_values_[1], ("‹ " + zone_name() + " ›").c_str());
         if (zone_ == 0) {
             std::snprintf(buf, sizeof(buf), "‹ %d km ›", kRadiiKm[static_cast<std::size_t>(radius_index_)]);
         } else {
             std::snprintf(buf, sizeof(buf), "zona entera");
         }
-        lv_label_set_text(row_values_[1], buf);
-        std::snprintf(buf, sizeof(buf), "‹ %d ›", zmin_);
         lv_label_set_text(row_values_[2], buf);
-        std::snprintf(buf, sizeof(buf), "‹ %d ›", zmax_);
+        std::snprintf(buf, sizeof(buf), "‹ %d ›", zmin_);
         lv_label_set_text(row_values_[3], buf);
-        lv_label_set_text(row_values_[4], ("‹ " + storages_[static_cast<std::size_t>(storage_)].label + " ›").c_str());
+        std::snprintf(buf, sizeof(buf), "‹ %d ›  (máx. %d)", zmax_, map::layer_info(layer_).max_zoom);
+        lv_label_set_text(row_values_[4], buf);
+        lv_label_set_text(row_values_[5], ("‹ " + storages_[static_cast<std::size_t>(storage_)].label + " ›").c_str());
 
         // Línea 1: tamaño. Se dice cuánto pesa el zoom mayor, que es casi todo.
         std::snprintf(buf, sizeof(buf), "%s teselas · ~%s   (z%d: %s)", map::format_count(plan_.tiles).c_str(),
@@ -341,9 +354,10 @@ void DownloadScreen::refresh() {
     lv_obj_set_y(info_[2], 50 + kInfoLine);
 
     if (state_ == State::Downloading) {
-        std::snprintf(buf, sizeof(buf), "Bajando %s  (z%d–%d)", zone_name().c_str(), plan_.zmin, plan_.zmax);
+        std::snprintf(buf, sizeof(buf), "Bajando %s · %s (z%d–%d)", map::layer_info(layer_).name,
+                      zone_name().c_str(), plan_.zmin, plan_.zmax);
     } else if (p.finished) {
-        std::snprintf(buf, sizeof(buf), "✔ Hecho: %s", zone_name().c_str());
+        std::snprintf(buf, sizeof(buf), "✔ Hecho: %s · %s", map::layer_info(layer_).name, zone_name().c_str());
     } else if (p.cancelled) {
         std::snprintf(buf, sizeof(buf), "Cancelado (lo bajado se queda)");
     } else {

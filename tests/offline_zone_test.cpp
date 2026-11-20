@@ -50,7 +50,15 @@ void test_plan() {
     CHECK(p.per_zoom[14] > 2 * p.per_zoom[13]);
     // Los zooms fuera de rango se recortan.
     const map::ZonePlan q = map::plan_zone(b, 1, 25);
-    CHECK(q.zmin == map::kDownloadZoomMin && q.zmax == map::kDownloadZoomMax);
+    CHECK(q.zmin == map::kDownloadZoomMin && q.zmax == 17); // el topográfico llega a 17
+    const map::ZonePlan o = map::plan_zone(b, 1, 25, map::MapLayer::Ortho);
+    CHECK(o.zmax == 19);
+    // La misma zona en satélite pesa menos que en topográfico, y en Base menos aún.
+    const map::ZonePlan t15 = map::plan_zone(b, 10, 15, map::MapLayer::Topo);
+    const map::ZonePlan o15 = map::plan_zone(b, 10, 15, map::MapLayer::Ortho);
+    const map::ZonePlan b15 = map::plan_zone(b, 10, 15, map::MapLayer::Base);
+    CHECK(t15.tiles == o15.tiles && o15.tiles == b15.tiles);
+    CHECK(t15.bytes > o15.bytes && o15.bytes > b15.bytes);
     // zone_tiles va de zoom menor a mayor.
     const auto tiles = map::zone_tiles(b, 10, 12);
     CHECK(tiles.front().z == 10 && tiles.back().z == 12);
@@ -91,6 +99,22 @@ void test_refresh_by_zoom() {
     CHECK(m > 0.8 && m < 1.0);
 }
 
+void test_layers() {
+    const map::Tile t{14, 8004, 6150};
+    CHECK(map::tile_path(map::MapLayer::Topo, t) == "14/8004/6150.jpeg");
+    CHECK(map::tile_path(map::MapLayer::Ortho, t) == "pnoa/14/8004/6150.jpeg");
+    CHECK(map::tile_path(map::MapLayer::Base, t) == "base/14/8004/6150.jpeg");
+    // La URL del topográfico es la de siempre.
+    CHECK(map::tile_url(map::MapLayer::Topo, t) == map::ign_mtn_url(t));
+    CHECK(map::tile_url(map::MapLayer::Ortho, t).find("pnoa-ma?") != std::string::npos);
+    CHECK(map::tile_url(map::MapLayer::Ortho, t).find("layer=OI.OrthoimageCoverage") != std::string::npos);
+    CHECK(map::tile_url(map::MapLayer::Base, t).find("layer=IGNBaseTodo") != std::string::npos);
+    map::MapLayer l = map::MapLayer::Topo;
+    CHECK(map::layer_from_key("pnoa", l) && l == map::MapLayer::Ortho);
+    CHECK(!map::layer_from_key("osm", l) && l == map::MapLayer::Ortho);
+    CHECK(map::next_layer(map::MapLayer::Base) == map::MapLayer::Topo);
+}
+
 void test_mounts() {
     const std::string text =
         "/dev/mmcblk0p2 / ext4 rw,noatime 0 0\n"
@@ -116,6 +140,7 @@ int main() {
     test_fit_zoom();
     test_format();
     test_refresh_by_zoom();
+    test_layers();
     test_mounts();
     if (failures == 0) {
         std::printf("offline_zone: todo bien\n");

@@ -4,7 +4,7 @@ App del **Cap LoRa-1262 (LoRa + GPS)** para el **M5Stack Cardputer Zero** (Raspb
 pantalla de 320×170, Debian 13 arm64). **Sólo para España** (mapas del IGN). Un menú con tres
 funciones:
 
-- **Mapa**: teselas del **IGN** (MTN topográfico), tu posición, el track que se graba y el
+- **Mapa**: teselas del **IGN** (topográfico MTN, satélite PNOA o IGN Base, tecla `M`), tu posición, el track que se graba y el
   abierto desde Tracks.
 - **Tracks**: grabar GPX (sigue aunque cambies de pantalla), listar `~/Tracks`, abrir, borrar.
 - **Mapas offline**: descargar una zona (radio o zona ya hecha, zoom mín./máx., tarjeta) con
@@ -58,6 +58,13 @@ Tools/compilar.sh simulador # abre el simulador en este escritorio (X11)
 
 ## Cómo está hecha
 
+- **Capas** (`map_layers`): Topo `mapa-raster/MTN` (máx. z17, en la raíz de la caché para
+  no perder lo ya bajado ni las de la app), Satélite `pnoa-ma/OI.OrthoimageCoverage` (z19,
+  `pnoa/`), Base `ign-base/IGNBaseTodo` (z18, `base/`). Todas JPEG y GoogleMapsCompatible
+  (comprobado en sus GetCapabilities el 20-nov-2026); los tamaños medios de tesela de
+  `estimated_tile_bytes` se midieron ese día en Navacerrada. `IGNBaseOrto` (rótulos sobre
+  la ortofoto) sería el «híbrido», pero es PNG con transparencia: haría falta libpng.
+
 - **`platform::GpsSession`** (la tiene el viewmodel, `view_model().gps()`): GNSS por demanda
   (`acquire`/`release`; con 0 usuarios se para el hilo y se cortan los 5V del cap), grabación
   (`gps::TrackRecorder` alimentado desde el hilo del GNSS, GPX reescrito cada 60 s con
@@ -101,10 +108,15 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 - El `.deb` se copia a `~/Documentos/ZeroGPS-<versión>.deb`, sustituyendo al anterior.
 - Commit en `main` con mensaje en español que empieza por la versión, y push.
 - `app-builder.json` tiene la ficha (`czdev publish`) pero **no está publicada** (y no está
-  previsto: va sola). Falta icono propio (`Tools/generar_icono.py` todavía dibuja el de
-  TV-B-Gone).
+  previsto: va sola). Icono: `Tools/generar_icono.py` (mapa plegado con chincheta).
 
 ## Estado
+
+- **0.3.0 (20-nov-2026) — elegir mapa e icono; sin probar en el aparato.**
+  - Tres mapas del IGN: topográfico, satélite (PNOA) y IGN Base. `M` en el mapa los cambia
+    (se recuerda en `maps.conf`); la descarga tiene fila «Mapa» con el zoom máximo de cada uno
+    y su estimación de tamaño. Probado en el simulador con el modo online (satélite a z17).
+  - Icono propio: mapa plegado con río, ruta y chincheta.
 
 - **0.2.0 (20-nov-2026) — mapa real, tracks y mapas offline; sin probar en el aparato.**
   - Arreglada la compilación que dejó rota la sesión anterior (`TileProvider` incluía
@@ -121,6 +133,6 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
   - **Pendiente:** probar en el aparato (¿`/dev/serial0` libre de la consola? ¿permisos del
     grupo `dialout`? ¿llega el NMEA a 115200?); ¿pierde efemérides el AT6668 al cortar los
     5V? (si el arranque en frío es lento, mantenerlo encendido o mandar el comando de reposo);
-    icono propio; LoRa.
+    LoRa.
 - **0.1.0 (20-nov-2026)** — esqueleto traído de ZeroRF-NFC, núcleo GPS (NMEA, GPX, teselas)
   con pruebas, lector GNSS y mapa con malla en lugar de teselas.

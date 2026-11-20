@@ -90,12 +90,22 @@ void TileProvider::set_roots(std::vector<std::string> roots) {
     missing_.clear();
 }
 
+void TileProvider::set_layer(map::MapLayer layer) {
+    if (layer == layer_) {
+        return;
+    }
+    layer_ = layer;
+    cache_.clear();
+    order_.clear();
+    missing_.clear();
+}
+
 void TileProvider::invalidate_missing() {
     missing_.clear();
 }
 
 std::string TileProvider::find_file(const map::Tile& tile) const {
-    const std::string rel = map::tile_cache_path(tile); // "z/x/y.jpeg"
+    const std::string rel = map::tile_path(layer_, tile); // "[capa/]z/x/y.jpeg"
     std::error_code ec;
     for (const auto& root : roots_) {
         const fs::path candidate = fs::path(root) / rel;
@@ -107,7 +117,7 @@ std::string TileProvider::find_file(const map::Tile& tile) const {
 }
 
 const DecodedTile* TileProvider::get(const map::Tile& tile) {
-    const std::string key = map::tile_cache_path(tile);
+    const std::string key = map::tile_cache_path(tile); // la memoria es de una sola capa
 
     const auto it = cache_.find(key);
     if (it != cache_.end()) {

@@ -34,8 +34,8 @@ constexpr std::array<HelpRow, 6> kMapRows = {{
     {"ENTER", "Centrar en mi posición"},
     {"+ / -", "Zoom (también . y ,)"},
     {"R", "Grabar / parar track"},
-    {"O", "Online: bajar lo que falte"},
-    {"D", "Descargar esta zona"},
+    {"M", "Mapa: topo / satélite / base"},
+    {"O  ·  D", "Online  ·  descargar zona"},
 }};
 
 constexpr std::array<HelpRow, 6> kTracksRows = {{

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "map_layers.h"
 #include "map_tiles.h"
 
 #include <array>
@@ -28,10 +29,11 @@ struct ZonePreset {
 };
 const std::vector<ZonePreset>& zone_presets();
 
-// Zooms que se pueden descargar. Por encima de 17 el MTN del IGN no da más detalle (sólo
-// amplía) y las teselas se multiplican por cuatro en cada nivel.
+// Zooms que se pueden descargar. El tope real lo pone cada capa (`LayerInfo::max_zoom`: por
+// encima no hay más detalle y las teselas se multiplican por cuatro en cada nivel); esto es
+// sólo el mayor de todos.
 constexpr int kDownloadZoomMin = 5;
-constexpr int kDownloadZoomMax = 17;
+constexpr int kDownloadZoomMax = 19;
 
 // Tope por descarga: el IGN es un servicio público y la licencia no ampara volcarlo entero.
 // 100 000 teselas son ~2 GB, de sobra para una sierra completa a zoom 16.
@@ -43,10 +45,6 @@ BBox bbox_around(double lat, double lon, double radius_km);
 // Número de teselas de una zona a un zoom (sin generarlas).
 long long count_tiles(const BBox& box, int z);
 
-// Bytes que ocupa de media una tesela del MTN (JPEG 256 px), medido con las de Guadarrama:
-// unos 26 KB a zoom 12 y 21 KB a 13-14. En zonas de ciudad pesan más; se redondea hacia arriba.
-long long estimated_tile_bytes(int z);
-
 struct ZonePlan {
     int zmin = 0;
     int zmax = 0;
@@ -55,11 +53,12 @@ struct ZonePlan {
     std::array<long long, kDownloadZoomMax + 1> per_zoom{};
 };
 
-ZonePlan plan_zone(const BBox& box, int zmin, int zmax);
+// Los zooms se recortan a [kDownloadZoomMin, max_zoom de la capa].
+ZonePlan plan_zone(const BBox& box, int zmin, int zmax, MapLayer layer = MapLayer::Topo);
 
 // Todas las teselas de la zona, de zoom menor a mayor (así, si se cancela, lo que queda
 // descargado ya sirve para ver la zona entera aunque sea con menos detalle).
-std::vector<Tile> zone_tiles(const BBox& box, int zmin, int zmax);
+std::vector<Tile> zone_tiles(const BBox& box, int zmin, int zmax, MapLayer layer = MapLayer::Topo);
 
 // El zoom mayor en el que la zona cabe entera en una ventana de w×h píxeles.
 int fit_zoom(const BBox& box, int w, int h, int zmin, int zmax);

@@ -49,7 +49,7 @@ TileDownloader::~TileDownloader() {
     }
 }
 
-bool TileDownloader::start(std::vector<map::Tile> tiles, std::string dir) {
+bool TileDownloader::start(std::vector<map::Tile> tiles, std::string dir, map::MapLayer layer) {
     if (running()) {
         return false;
     }
@@ -58,6 +58,7 @@ bool TileDownloader::start(std::vector<map::Tile> tiles, std::string dir) {
     }
     tiles_ = std::move(tiles);
     dir_ = std::move(dir);
+    layer_ = layer;
     cancel_ = false;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -134,7 +135,7 @@ void TileDownloader::run() {
             ok = false;
             break;
         }
-        const fs::path target = fs::path(dir_) / map::tile_cache_path(tile);
+        const fs::path target = fs::path(dir_) / map::tile_path(layer_, tile);
         if (fs::is_regular_file(target, ec)) {
             std::lock_guard<std::mutex> lock(mutex_);
             ++progress_.skipped;
@@ -162,8 +163,8 @@ bool TileDownloader::run_batch(const std::vector<map::Tile>& batch) {
     {
         std::ofstream out(config, std::ios::trunc);
         for (const auto& tile : batch) {
-            const fs::path part = fs::path(dir_) / (map::tile_cache_path(tile) + ".part");
-            out << "url = \"" << map::ign_mtn_url(tile) << "\"\n";
+            const fs::path part = fs::path(dir_) / (map::tile_path(layer_, tile) + ".part");
+            out << "url = \"" << map::tile_url(layer_, tile) << "\"\n";
             out << "output = \"" << part.string() << "\"\n";
         }
     }
@@ -196,7 +197,7 @@ bool TileDownloader::run_batch(const std::vector<map::Tile>& batch) {
 
     bool any_ok = false;
     for (const auto& tile : batch) {
-        const fs::path target = fs::path(dir_) / map::tile_cache_path(tile);
+        const fs::path target = fs::path(dir_) / map::tile_path(layer_, tile);
         const fs::path part = target.string() + ".part";
         std::uintmax_t size = 0;
         if (!cancel_ && looks_like_jpeg(part, size)) {

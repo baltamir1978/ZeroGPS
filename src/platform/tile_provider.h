@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "map_layers.h"
 #include "map_tiles.h"
 
 #include <cstdint>
@@ -43,11 +44,17 @@ public:
     void invalidate_missing();
 
     void set_roots(std::vector<std::string> roots);
+    // Cambia de mapa (topográfico, satélite...): se vacía la memoria.
+    void set_layer(map::MapLayer layer);
+    map::MapLayer layer() const {
+        return layer_;
+    }
 
 private:
     std::string find_file(const map::Tile& tile) const;
 
     std::vector<std::string> roots_;
+    map::MapLayer layer_ = map::MapLayer::Topo;
     std::unordered_map<std::string, DecodedTile> cache_;
     std::list<std::string> order_; // claves por antigüedad de uso (frente = reciente)
     std::unordered_set<std::string> missing_;

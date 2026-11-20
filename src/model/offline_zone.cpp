@@ -54,36 +54,25 @@ long long count_tiles(const BBox& raw, int z) {
     return static_cast<long long>(br.x - tl.x + 1) * static_cast<long long>(br.y - tl.y + 1);
 }
 
-long long estimated_tile_bytes(int z) {
-    // Medido: z12 ≈ 25,8 KB, z13-14 ≈ 20,9 KB. A zooms altos hay más tesela «vacía» (campo)
-    // y a bajos más detalle por píxel; se deja un margen del ~10 %.
-    if (z <= 10) {
-        return 30 * 1024;
-    }
-    if (z <= 12) {
-        return 28 * 1024;
-    }
-    return 23 * 1024;
-}
-
-ZonePlan plan_zone(const BBox& box, int zmin, int zmax) {
+ZonePlan plan_zone(const BBox& box, int zmin, int zmax, MapLayer layer) {
     ZonePlan plan;
-    zmin = std::clamp(zmin, kDownloadZoomMin, kDownloadZoomMax);
-    zmax = std::clamp(zmax, zmin, kDownloadZoomMax);
+    const int top = std::min(kDownloadZoomMax, layer_info(layer).max_zoom);
+    zmin = std::clamp(zmin, kDownloadZoomMin, top);
+    zmax = std::clamp(zmax, zmin, top);
     plan.zmin = zmin;
     plan.zmax = zmax;
     for (int z = zmin; z <= zmax; ++z) {
         const long long n = count_tiles(box, z);
         plan.per_zoom[z] = n;
         plan.tiles += n;
-        plan.bytes += n * estimated_tile_bytes(z);
+        plan.bytes += n * estimated_tile_bytes(layer, z);
     }
     return plan;
 }
 
-std::vector<Tile> zone_tiles(const BBox& box, int zmin, int zmax) {
+std::vector<Tile> zone_tiles(const BBox& box, int zmin, int zmax, MapLayer layer) {
     std::vector<Tile> out;
-    const ZonePlan plan = plan_zone(box, zmin, zmax);
+    const ZonePlan plan = plan_zone(box, zmin, zmax, layer);
     out.reserve(static_cast<std::size_t>(plan.tiles));
     for (int z = plan.zmin; z <= plan.zmax; ++z) {
         const auto tiles = tiles_for_bbox(box.min_lat, box.min_lon, box.max_lat, box.max_lon, z);

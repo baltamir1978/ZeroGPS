@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "map_layers.h"
 #include "map_tiles.h"
 
 #include <atomic>
@@ -46,7 +47,8 @@ public:
     TileDownloader(const TileDownloader&) = delete;
     TileDownloader& operator=(const TileDownloader&) = delete;
 
-    bool start(std::vector<map::Tile> tiles, std::string dir);
+    // `dir` es la carpeta raíz de teselas; cada capa va en su subcarpeta (map::tile_path).
+    bool start(std::vector<map::Tile> tiles, std::string dir, map::MapLayer layer);
     void cancel();
     bool running() const;
     Progress progress() const;
@@ -59,6 +61,7 @@ private:
 
     std::vector<map::Tile> tiles_;
     std::string dir_;
+    map::MapLayer layer_ = map::MapLayer::Topo;
     std::thread worker_;
     std::atomic<bool> cancel_{false};
     std::atomic<pid_t> child_{-1};

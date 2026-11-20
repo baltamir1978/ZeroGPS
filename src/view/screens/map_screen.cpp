@@ -24,7 +24,7 @@ constexpr int32_t kH = view::kScreenHeight - view::kTitleBarHeight; // 140
 constexpr int32_t kCx = kW / 2;
 constexpr int32_t kCy = kH / 2;
 constexpr int kZoomMin = 5;
-constexpr int kZoomMax = 18;
+constexpr int kZoomMax = 19; // la ortofoto llega; el topográfico se amplía desde z17
 // Cuántos niveles por encima se busca una tesela para ampliarla si falta la del zoom actual
 // (así a z18, o en una zona bajada sólo hasta z14, se ve algo en vez de un hueco).
 constexpr int kMaxOverzoom = 4;
@@ -53,6 +53,7 @@ std::string tile_key(const map::Tile& t) {
 
 MapScreen::MapScreen(viewmodel::BaseViewModel& view_model, app::AssetManager& assets)
     : BaseScreen(view_model, assets), gps_(view_model.gps()), tiles_(gps_.tile_roots()) {
+    tiles_.set_layer(gps_.layer());
     gps_.acquire();
     init();
     this->view_model().set_page_handlers(this, [this](uint32_t key) { return handle_key(key); },
@@ -111,7 +112,6 @@ void MapScreen::build_content(lv_obj_t* content) {
     lv_obj_set_style_bg_opa(rec_, LV_OPA_COVER, 0);
     online_ = make_label(small, LV_ALIGN_BOTTOM_LEFT, 2, -2);
     attribution_ = make_label(small, LV_ALIGN_BOTTOM_RIGHT, -2, -2);
-    lv_label_set_text(attribution_, "© IGN");
 
     // Si se viene de Tracks con un track cargado, la vista ya está puesta sobre él.
     apply_theme();
@@ -179,6 +179,16 @@ bool MapScreen::handle_key(uint32_t key) {
         case 'O':
             gps_.set_online(!gps_.online());
             fetch_failed_.clear();
+            redraw(true);
+            return true;
+        case 'm':
+        case 'M':
+            // Topográfico → satélite → IGN Base. Lo que se estuviera bajando era de la otra capa.
+            fetcher_.cancel();
+            fetch_request_.clear();
+            fetch_failed_.clear();
+            gps_.set_layer(map::next_layer(gps_.layer()));
+            tiles_.set_layer(gps_.layer());
             redraw(true);
             return true;
         case 'd':
@@ -331,7 +341,7 @@ bool MapScreen::blit_tile(int tx, int ty, int dst_x, int dst_y) {
         const map::Tile src{z - d, tx >> d, ty >> d};
         const platform::DecodedTile* tile = tiles_.get(src);
         if (!tile || tile->w != map::kTileSize || tile->h != map::kTileSize) {
-            if (d == 0 && z <= map::kDownloadZoomMax) {
+            if (d == 0 && z <= map::layer_info(tiles_.layer()).max_zoom) {
                 missing_visible_.push_back(map::Tile{z, tx, ty});
             }
             continue;
@@ -449,6 +459,10 @@ void MapScreen::update_labels() {
         lv_obj_add_flag(rec_, LV_OBJ_FLAG_HIDDEN);
     }
 
+    const auto& layer = map::layer_info(gps_.layer());
+    std::snprintf(buf, sizeof(buf), "%s · %s", layer.name, layer.attribution);
+    set_text(attribution_, buf);
+
     if (gps_.online()) {
         if (fetcher_.running()) {
             const auto p = fetcher_.progress();
@@ -480,7 +494,7 @@ void MapScreen::request_missing_tiles() {
     }
     fetcher_.reset();
     fetch_request_ = wanted;
-    fetcher_.start(std::move(wanted), gps_.tiles_dir());
+    fetcher_.start(std::move(wanted), gps_.tiles_dir(), gps_.layer());
     update_timer();
 }
 
@@ -491,7 +505,7 @@ void MapScreen::check_fetch_done() {
     // Las que no llegaron no se vuelven a pedir en esta visita (sin red, fuera de España...).
     std::error_code ec;
     for (const auto& t : fetch_request_) {
-        const auto path = std::filesystem::path(gps_.tiles_dir()) / map::tile_cache_path(t);
+        const auto path = std::filesystem::path(gps_.tiles_dir()) / map::tile_path(gps_.layer(), t);
         if (!std::filesystem::is_regular_file(path, ec)) {
             fetch_failed_.insert(tile_key(t));
         }

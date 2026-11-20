@@ -4,22 +4,34 @@ GPS con mapas topográficos del **IGN** para el **M5Stack Cardputer Zero** (Rasp
 pantalla de 320×170, Linux) con el **Cap LoRa-1262** (LoRa SX1262 + GNSS AT6668). En el
 lanzador aparece como **GPS**.
 
-> **Sólo para España.** Los mapas son el MTN (Mapa Topográfico Nacional) del
-> **Instituto Geográfico Nacional de España**: fuera de España (y de lo que cubre el IGN) no
-> hay mapa. La interfaz está en español.
+> **Sólo para España.** Los mapas son del **Instituto Geográfico Nacional de España**: fuera
+> de España (y de lo que cubre el IGN) no hay mapa. La interfaz está en español.
 
-![Mapa](screenshot/map.png)
+![Mapa topográfico](screenshot/map.png) ![Satélite](screenshot/satellite.png)
+
+## Mapas
+
+Se elige con la tecla `M` en el mapa (y en la descarga, con la fila «Mapa»):
+
+| Mapa | Qué es | Zoom con detalle | Tesela media |
+|---|---|---|---|
+| **Topográfico** | MTN, el mapa topográfico nacional: curvas de nivel, caminos, fuentes | hasta 17 | ~20-25 KB |
+| **Satélite** | Ortofoto aérea PNOA (25 cm por píxel) | hasta 19 | ~15-17 KB |
+| **IGN Base** | Cartografía simplificada, tipo callejero | hasta 18 | ~3-10 KB |
+
+Cada mapa se guarda en su carpeta, así que se pueden tener los tres de la misma zona. Por
+encima del zoom con detalle se amplía el último nivel.
 
 ## Qué hace
 
-- **Mapa**: tu posición sobre el mapa topográfico del IGN, con el track que estás grabando
+- **Mapa**: tu posición sobre el mapa del IGN (topográfico, satélite o Base), con el track que estás grabando
   (rojo) y el que hayas abierto desde Tracks (morado). Se mueve con las flechas y se centra en
   ti con ENTER. Si falta una tesela a un zoom, amplía la de un zoom menor en vez de dejar un
   hueco.
 - **Tracks**: graba tu recorrido en **GPX** (sigue grabando aunque salgas del mapa), lista los
   guardados en `~/Tracks`, los abre en el mapa y los borra.
 - **Mapas offline**: descarga una zona entera a la tarjeta para usarla en el monte sin
-  cobertura. Eliges la zona (alrededor de donde tengas el mapa, con un radio de 1 a 50 km, o
+  cobertura. Eliges el mapa, la zona (alrededor de donde tengas el mapa, con un radio de 1 a 50 km, o
   una zona completa ya hecha: Guadarrama, Gredos, Picos de Europa, Sierra Nevada, Pirineo
   central, Cazorla, Montseny, Madrid), el **zoom mínimo y máximo** y **dónde guardarla** (la
   tarjeta del sistema o una tarjeta/pincho montado). Antes de bajar nada ves **cuántas
@@ -58,6 +70,7 @@ La batería del Cardputer Zero es pequeña, así que la app intenta gastar lo m�
 | | `ENTER` | Centrar en mi posición |
 | | `+` `-` (o `.` `,`) | Zoom |
 | | `R` | Grabar / parar track |
+| | `M` | Cambiar de mapa: topográfico, satélite, IGN Base |
 | | `O` | Modo online |
 | | `D` | Descargar la zona que estás viendo |
 | Tracks | `ENTER` | Grabar / parar, o abrir el track en el mapa |
@@ -68,8 +81,9 @@ La batería del Cardputer Zero es pequeña, así que la app intenta gastar lo m�
 ## Dónde guarda las cosas
 
 - Tracks: `~/Tracks/AAAA-MM-DD_hhmmss.gpx` (hora UTC del GPS).
-- Teselas: `~/.local/share/zerogps/tiles/z/x/y.jpeg`, o `<tarjeta>/ZeroGPS/tiles/` si eliges
-  otra tarjeta. El mapa busca en todas.
+- Teselas: `~/.local/share/zerogps/tiles/` (o `<tarjeta>/ZeroGPS/tiles/` si eliges otra
+  tarjeta): el topográfico en `z/x/y.jpeg`, el satélite en `pnoa/z/x/y.jpeg` y el Base en
+  `base/z/x/y.jpeg`. El mapa busca en todas las tarjetas.
 - Ajustes de mapas: `~/.config/zerogps/maps.conf`.
 
 ## Compilar
@@ -87,9 +101,10 @@ paquete).
 
 ## Mapas y licencia
 
-Las teselas vienen del servicio WMTS del IGN (`https://www.ign.es/wmts/mapa-raster`, capa
-`MTN`, conjunto `GoogleMapsCompatible`). Los datos son **© Instituto Geográfico Nacional de
-España**, con licencia **CC-BY 4.0**: la atribución se ve siempre en el mapa. La app pide las
+Las teselas vienen de los servicios WMTS del IGN, con el conjunto `GoogleMapsCompatible`:
+`mapa-raster` (capa `MTN`), `pnoa-ma` (capa `OI.OrthoimageCoverage`) e `ign-base` (capa
+`IGNBaseTodo`). Los datos son **© Instituto Geográfico Nacional de España** (la ortofoto, del
+PNOA), con licencia **CC-BY 4.0**: la atribución se ve siempre en el mapa. La app pide las
 teselas con moderación (como mucho 3 a la vez) y pone un tope de 100.000 teselas por descarga:
 es para llevarte tus zonas, no para volcar el servicio.
 
@@ -98,6 +113,6 @@ bajo CC-BY 4.0.
 
 ## Estado
 
-**0.2.0**: mapa con teselas reales, grabación de tracks, mapas offline y modo online. Probado en
-el simulador; **sin probar en el aparato** (falta comprobar el GNSS real por `/dev/serial0`). El
+**0.3.0**: tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
+offline y modo online. Probado en el simulador; **sin probar en el aparato** (falta comprobar el GNSS real por `/dev/serial0`). El
 LoRa (SX1262) queda para más adelante.
