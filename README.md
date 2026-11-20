@@ -27,7 +27,14 @@ encima del zoom con detalle se amplía el último nivel.
 - **Mapa**: tu posición sobre el mapa del IGN (topográfico, satélite o Base), con el track que estás grabando
   (rojo) y el que hayas abierto desde Tracks (morado). Se mueve con las flechas y se centra en
   ti con ENTER. Si falta una tesela a un zoom, amplía la de un zoom menor en vez de dejar un
-  hueco.
+  hueco. Arriba, la posición, la altitud, el nivel de zoom (`z14`) y los satélites usados.
+- **Satélites**: el cielo visto desde arriba (norte arriba; círculos de horizonte, 30° y 60°
+  de elevación) con cada satélite en su sitio y el color de su constelación (GPS, Galileo,
+  GLONASS, BeiDou, QZSS, SBAS): **relleno** si se usa para la posición, hueco si sólo se ve,
+  tenue si no se oye. Al lado: tipo de fix (2D/3D), satélites usados/vistos, latitud,
+  longitud, altitud, velocidad, **precisión aproximada** (HDOP × ~4 m: el GNSS no da el error
+  real), HDOP y VDOP, hora UTC y cuántos se usan de cada constelación. Recién encendido el
+  GNSS oye satélites sin saber aún dónde están: salen como «+N sin situar».
 - **Tracks**: graba tu recorrido en **GPX** (sigue grabando aunque salgas del mapa), lista los
   guardados en `~/Tracks`, los abre en el mapa y los borra.
 - **Mapas offline**: descarga una zona entera a la tarjeta para usarla en el monte sin
@@ -44,13 +51,14 @@ encima del zoom con detalle se amplía el último nivel.
 Trae de serie las teselas de la Sierra de Guadarrama (zooms 12 a 14) para tener mapa sin
 descargar nada.
 
-![Tracks](screenshot/tracks.png) ![Mapas offline](screenshot/download.png)
+![Satélites](screenshot/sky.png) ![Tracks](screenshot/tracks.png) ![Mapas offline](screenshot/download.png)
 
 ## Batería
 
 La batería del Cardputer Zero es pequeña, así que la app intenta gastar lo mínimo:
 
-- El GNSS (y los 5V del cap) **sólo está encendido** con el mapa abierto o mientras grabas.
+- El GNSS (y los 5V del cap) **sólo está encendido** con el mapa o los satélites abiertos, o
+  mientras grabas.
 - El mapa se refresca **según el zoom**: cada segundo de cerca (z16-18), cada 2 s a z14-15,
   cada 5 s a z12-13 y cada 10 s más lejos. Y sólo se repinta si te has movido al menos 2
   píxeles: de lejos, aunque andes, el punto casi no se mueve.
@@ -113,7 +121,7 @@ bajo CC-BY 4.0.
 
 ## Estado
 
-**0.3.2**: tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
+**0.4.0**: pantalla de satélites; tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
 offline y modo online. Probado en el simulador; en el aparato ya se instala y coge posición
 (5 satélites junto a una ventana); falta probar ahí el mapa con teselas y grabar un track. El
 LoRa (SX1262) queda para más adelante.

@@ -26,9 +26,10 @@ private:
     void refresh();
     static void refresh_observer(lv_observer_t* observer, lv_subject_t* subject);
 
-    std::array<lv_obj_t*, 3> cards_{};
-    std::array<lv_obj_t*, 3> names_{};
-    std::array<lv_obj_t*, 3> subtitles_{};
+    static constexpr std::size_t kMenuEntries = viewmodel::BaseViewModel::kMenuCount;
+    std::array<lv_obj_t*, kMenuEntries> cards_{};
+    std::array<lv_obj_t*, kMenuEntries> names_{};
+    std::array<lv_obj_t*, kMenuEntries> subtitles_{};
     lv_obj_t* hint_{nullptr};
 };
 

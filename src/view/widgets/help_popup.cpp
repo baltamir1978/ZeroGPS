@@ -38,6 +38,13 @@ constexpr std::array<HelpRow, 6> kMapRows = {{
     {"O  ·  D", "Online  ·  descargar zona"},
 }};
 
+constexpr std::array<HelpRow, 4> kSkyRows = {{
+    {"Círculos", "Horizonte, 30° y 60°"},
+    {"Relleno", "Se usa para la posición"},
+    {"Tenue", "A la vista, sin señal"},
+    {"ESC", "Volver"},
+}};
+
 constexpr std::array<HelpRow, 6> kTracksRows = {{
     {"F / X", "Elegir"},
     {"ENTER", "Grabar / ver en el mapa"},
@@ -65,6 +72,8 @@ HelpPage help_page_for(model::AppPage page) {
     switch (page) {
         case model::AppPage::Map:
             return {"MAPA", kMapRows.data(), kMapRows.size()};
+        case model::AppPage::Sky:
+            return {"SAT", kSkyRows.data(), kSkyRows.size()};
         case model::AppPage::Tracks:
             return {"TRACKS", kTracksRows.data(), kTracksRows.size()};
         case model::AppPage::Download:

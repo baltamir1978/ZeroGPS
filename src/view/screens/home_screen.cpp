@@ -19,17 +19,18 @@ struct Entry {
 };
 
 // El orden tiene que coincidir con BaseViewModel::page_for_menu.
-constexpr std::array<Entry, 3> kEntries = {{
+constexpr std::array<Entry, viewmodel::BaseViewModel::kMenuCount> kEntries = {{
     {"Mapa", "IGN en vivo con tu track"},
+    {"Satélites", "Cielo, precisión y altitud"},
     {"Tracks", "Grabar y ver GPX"},
     {"Mapas offline", "Descargar una zona"},
 }};
 
 constexpr int32_t kMargin = 10;
-constexpr int32_t kTop = 7;
-constexpr int32_t kCardGap = 5;
+constexpr int32_t kTop = 4;
+constexpr int32_t kCardGap = 3;
 constexpr int32_t kCardWidth = view::kScreenWidth - 2 * kMargin;
-constexpr int32_t kCardHeight = 34;
+constexpr int32_t kCardHeight = 25;
 
 } // namespace
 

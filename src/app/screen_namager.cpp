@@ -9,6 +9,7 @@
 #include "download_screen.h"
 #include "home_screen.h"
 #include "map_screen.h"
+#include "sky_screen.h"
 #include "tracks_screen.h"
 
 namespace app {
@@ -67,6 +68,9 @@ void ScreenManager::show_page(model::AppPage page) {
     switch (page) {
         case model::AppPage::Map:
             next = std::make_unique<screen::MapScreen>(view_model_, assets_);
+            break;
+        case model::AppPage::Sky:
+            next = std::make_unique<screen::SkyScreen>(view_model_, assets_);
             break;
         case model::AppPage::Tracks:
             next = std::make_unique<screen::TracksScreen>(view_model_, assets_);

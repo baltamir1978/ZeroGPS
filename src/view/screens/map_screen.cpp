@@ -441,8 +441,8 @@ void MapScreen::update_labels() {
     const auto& view = gps_.map_view();
     char buf[96];
     if (fix_.valid) {
-        std::snprintf(buf, sizeof(buf), "%.5f %.5f  z%d  %d sat%s", fix_.lat, fix_.lon, view.zoom,
-                      fix_.satellites, view.follow ? "" : "  · libre");
+        std::snprintf(buf, sizeof(buf), "%.5f %.5f  %.0f m  z%d  %d sat%s", fix_.lat, fix_.lon,
+                      fix_.alt_m, view.zoom, fix_.satellites, view.follow ? "" : "  · libre");
     } else {
         std::snprintf(buf, sizeof(buf), "Buscando satélites…  z%d%s", view.zoom,
                       view.follow ? "" : "  · libre");

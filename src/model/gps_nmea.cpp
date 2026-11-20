@@ -4,6 +4,7 @@
 
 #include "gps_nmea.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
@@ -82,7 +83,117 @@ void parse_date(const std::string& ddmmyy, Fix& fix) {
     fix.year = (yy < 70) ? 2000 + yy : 1900 + yy;
 }
 
+int to_int(const std::string& s, int fallback) {
+    if (s.empty()) {
+        return fallback;
+    }
+    return std::atoi(s.c_str());
+}
+
+// Ráfagas (GGA) que aguanta un grupo de GSV o una lista de usados sin renovarse antes de
+// olvidarlo: una constelación que se pierde no se queda pintada para siempre.
+constexpr long kStaleEpochs = 5;
+
+// Constelación por el «talker» ("GP", "GL"…). GN (combinado) no dice nada: se mira el número.
+System system_for_talker(const std::string& talker) {
+    if (talker == "GP") {
+        return System::Gps;
+    }
+    if (talker == "GL") {
+        return System::Glonass;
+    }
+    if (talker == "GA") {
+        return System::Galileo;
+    }
+    if (talker == "GB" || talker == "BD") {
+        return System::Beidou;
+    }
+    if (talker == "GQ" || talker == "QZ") {
+        return System::Qzss;
+    }
+    if (talker == "GI") {
+        return System::Navic;
+    }
+    return System::Unknown;
+}
+
+// Numeración «extendida» de NMEA 4.x, la que usan los receptores con talker GN.
+System system_for_prn(int prn) {
+    if (prn >= 1 && prn <= 32) {
+        return System::Gps;
+    }
+    if (prn >= 33 && prn <= 64) {
+        return System::Sbas;
+    }
+    if (prn >= 65 && prn <= 96) {
+        return System::Glonass;
+    }
+    if (prn >= 193 && prn <= 199) {
+        return System::Qzss;
+    }
+    if ((prn >= 201 && prn <= 263) || (prn >= 401 && prn <= 463)) {
+        return System::Beidou;
+    }
+    if (prn >= 301 && prn <= 336) {
+        return System::Galileo;
+    }
+    return System::Unknown;
+}
+
+// Los SBAS (EGNOS en España) llegan con talker GP y números 33-64 (o 120-158).
+System resolve_system(System from_talker, int prn) {
+    if (from_talker == System::Unknown) {
+        return system_for_prn(prn);
+    }
+    if (from_talker == System::Gps && ((prn >= 33 && prn <= 64) || (prn >= 120 && prn <= 158))) {
+        return System::Sbas;
+    }
+    return from_talker;
+}
+
+// Id de sistema del final de la GSA en NMEA 4.10+.
+System system_for_id(const std::string& id) {
+    switch (to_int(id, 0)) {
+        case 1:
+            return System::Gps;
+        case 2:
+            return System::Glonass;
+        case 3:
+            return System::Galileo;
+        case 4:
+            return System::Beidou;
+        case 5:
+            return System::Qzss;
+        case 6:
+            return System::Navic;
+        default:
+            return System::Unknown;
+    }
+}
+
 } // namespace
+
+const char* system_name(System system) {
+    switch (system) {
+        case System::Gps:
+            return "GPS";
+        case System::Glonass:
+            return "GLONASS";
+        case System::Galileo:
+            return "Galileo";
+        case System::Beidou:
+            return "BeiDou";
+        case System::Qzss:
+            return "QZSS";
+        case System::Navic:
+            return "NavIC";
+        case System::Sbas:
+            return "SBAS";
+        case System::Unknown:
+        default:
+            return "?";
+    }
+}
 
 std::string Fix::iso_time() const {
     if (year == 0 || month == 0 || day == 0) {
@@ -144,13 +255,151 @@ bool Parser::feed(const std::string& line) {
         fix_.fix_quality = std::atoi(t[6].c_str());
         fix_.satellites = std::atoi(t[7].c_str());
         fix_.alt_m = to_double(t[9]);
+        if (!t[8].empty()) {
+            fix_.hdop = to_double(t[8]);
+        }
+        // Una ráfaga por segundo trae una GGA: sirve de reloj para olvidar lo que no se renueva.
+        ++epoch_;
+        rebuild_sky();
         // Calidad 0 es «sin posición»: así se nota enseguida que se pierde la señal aunque
         // la RMC llegue después (o no llegue).
         fix_.valid = fix_.fix_quality > 0;
         return true;
     }
 
+    if (type == "GSV" && t.size() >= 4) {
+        parse_gsv(t);
+        return true;
+    }
+
+    if (type == "GSA" && t.size() >= 18) {
+        parse_gsa(t);
+        return true;
+    }
+
     return false;
+}
+
+void Parser::parse_gsv(const std::vector<std::string>& t) {
+    // $xxGSV,total,parte,a_la_vista,{prn,elev,azim,snr}x1..4[,id_señal]
+    const std::string talker = t[0].substr(1, 2);
+    const int total = to_int(t[1], 0);
+    const int part = to_int(t[2], 0);
+    const std::size_t fields = t.size() - 4;
+    const std::string signal = (fields % 4 == 1) ? t.back() : "";
+    GsvGroup& group = gsv_[talker + signal];
+
+    if (part == 1) {
+        group.pending.clear();
+        group.expected = total;
+        group.next = 1;
+    }
+    if (part != group.next || total != group.expected) {
+        // Se ha perdido una parte: se espera al ciclo siguiente.
+        group.pending.clear();
+        group.next = 1;
+        return;
+    }
+
+    const System from_talker = system_for_talker(talker);
+    for (std::size_t i = 4; i + 3 < t.size(); i += 4) {
+        if (t[i].empty()) {
+            continue;
+        }
+        Satellite sat;
+        sat.prn = to_int(t[i], 0);
+        sat.system = resolve_system(from_talker, sat.prn);
+        sat.elevation = to_int(t[i + 1], -1);
+        sat.azimuth = to_int(t[i + 2], -1);
+        sat.snr = to_int(t[i + 3], -1);
+        group.pending.push_back(sat);
+    }
+    ++group.next;
+
+    if (part == total) {
+        group.complete.swap(group.pending);
+        group.pending.clear();
+        group.next = 1;
+        group.epoch = epoch_;
+        rebuild_sky();
+    }
+}
+
+void Parser::parse_gsa(const std::vector<std::string>& t) {
+    // $xxGSA,modo,fix,prn x12,PDOP,HDOP,VDOP[,id_sistema]
+    fix_.fix_mode = to_int(t[2], 0);
+    fix_.pdop = to_double(t[15]);
+    fix_.hdop = to_double(t[16]);
+    fix_.vdop = to_double(t[17]);
+
+    System system = t.size() >= 19 ? system_for_id(t[18]) : System::Unknown;
+    if (system == System::Unknown) {
+        system = system_for_talker(t[0].substr(1, 2));
+    }
+
+    // Con la constelación conocida, la lista sustituye a la anterior de esa constelación
+    // (aunque venga vacía: ya no se usa ninguno). Con GN sin id, se reparte por número.
+    std::map<System, std::set<int>> lists;
+    if (system != System::Unknown) {
+        lists[system];
+    }
+    if (system == System::Gps) {
+        lists[System::Sbas]; // los SBAS (EGNOS) vienen en la lista de GPS
+    }
+    for (int i = 3; i <= 14; ++i) {
+        if (t[i].empty()) {
+            continue;
+        }
+        const int prn = to_int(t[i], 0);
+        lists[resolve_system(system, prn)].insert(prn);
+    }
+    for (auto& [sys, prns] : lists) {
+        UsedSet& used = used_[sys];
+        used.prns = std::move(prns);
+        used.epoch = epoch_;
+    }
+    rebuild_sky();
+}
+
+void Parser::rebuild_sky() {
+    // Un mismo satélite sale en varios grupos si se recibe en varias señales (L1, L5…): se
+    // junta en uno, con la mejor señal y la posición que se sepa.
+    std::map<std::pair<System, int>, Satellite> merged;
+    for (auto it = gsv_.begin(); it != gsv_.end();) {
+        if (epoch_ - it->second.epoch > kStaleEpochs) {
+            it = gsv_.erase(it);
+            continue;
+        }
+        for (const Satellite& sat : it->second.complete) {
+            auto [pos, inserted] = merged.try_emplace({sat.system, sat.prn}, sat);
+            if (!inserted) {
+                Satellite& have = pos->second;
+                have.snr = std::max(have.snr, sat.snr);
+                if (have.elevation < 0) {
+                    have.elevation = sat.elevation;
+                }
+                if (have.azimuth < 0) {
+                    have.azimuth = sat.azimuth;
+                }
+            }
+        }
+        ++it;
+    }
+    for (auto it = used_.begin(); it != used_.end();) {
+        if (epoch_ - it->second.epoch > kStaleEpochs) {
+            it = used_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    fix_.sky.clear();
+    fix_.sky.reserve(merged.size());
+    for (auto& [key, sat] : merged) {
+        const auto used = used_.find(sat.system);
+        sat.used = used != used_.end() && used->second.prns.count(sat.prn) > 0;
+        fix_.sky.push_back(sat);
+    }
 }
 
 } // namespace gps

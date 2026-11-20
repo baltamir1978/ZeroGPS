@@ -1,11 +1,13 @@
 # ZeroGPS
 
 App del **Cap LoRa-1262 (LoRa + GPS)** para el **M5Stack Cardputer Zero** (Raspberry Pi CM0,
-pantalla de 320×170, Debian 13 arm64). **Sólo para España** (mapas del IGN). Un menú con tres
+pantalla de 320×170, Debian 13 arm64). **Sólo para España** (mapas del IGN). Un menú con cuatro
 funciones:
 
 - **Mapa**: teselas del **IGN** (topográfico MTN, satélite PNOA o IGN Base, tecla `M`), tu posición, el track que se graba y el
   abierto desde Tracks.
+- **Satélites**: el cielo (círculos de elevación, norte arriba) con los satélites por
+  constelación, y fix, coordenadas, altitud, precisión aproximada y DOP.
 - **Tracks**: grabar GPX (sigue aunque cambies de pantalla), listar `~/Tracks`, abrir, borrar.
 - **Mapas offline**: descargar una zona (radio o zona ya hecha, zoom mín./máx., tarjeta) con
   aviso de tamaño y espacio libre.
@@ -47,8 +49,9 @@ Tools/compilar.sh simulador # abre el simulador en este escritorio (X11)
   *bindings* reactivos, barra de título, aviso, ayuda y el **enrutado de teclas por pantalla**
   (`BaseViewModel::set_page_handlers`) se conservan. Un arreglo en esas piezas comunes conviene
   llevarlo a las tres apps del aparato. Se quitó todo lo de RF/NFC y el menú pasó a Map / Tracks.
-- **Núcleo GPS** (software puro, con pruebas) en `src/model/`: `gps_nmea` (parsea RMC/GGA con
-  checksum), `gps_gpx` (leer/escribir GPX 1.1) y `map_tiles` (matemática Web Mercator lon/lat↔
+- **Núcleo GPS** (software puro, con pruebas) en `src/model/`: `gps_nmea` (parsea RMC/GGA/GSA/GSV
+  con checksum; el cielo se arma con los GSV completos por talker+señal, junta L1/L5 del mismo
+  satélite y olvida lo que no se renueva en 5 GGA), `gps_gpx` (leer/escribir GPX 1.1) y `map_tiles` (matemática Web Mercator lon/lat↔
   tesela/píxel, teselas que cubren una zona, URL del IGN y ruta de caché).
 - **Mapas del IGN**: WMTS con el conjunto **`GoogleMapsCompatible`** (Web Mercator EPSG:3857,
   256 px) → teselas z/x/y estándar. Endpoint MTN: `ign.es/wmts/mapa-raster` (JPEG). Licencia
@@ -112,6 +115,19 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
   previsto: va sola). Icono: `Tools/generar_icono.py` (mapa plegado con chincheta).
 
 ## Estado
+
+- **0.4.0 (20-nov-2026) — pantalla de satélites; instalada, sin probar en el aparato.**
+  - Entrada nueva «Satélites» en el menú (segunda): cielo con los satélites por
+    constelación (relleno = usado, tenue = sin señal, «+N sin situar» los que aún no tienen
+    elevación/azimut) y columna con fix 2D/3D, usados/vistos, lat/lon, altitud, velocidad,
+    precisión ≈ HDOP × 4 m (el AT6668 no manda GST), HDOP/VDOP, hora UTC y leyenda
+    usados/vistos por constelación. Lo pidió Bruno.
+  - El parser lee GSA (modo de fix, DOP, usados; id de sistema de NMEA 4.10 o, con GN sin
+    él, por número) y GSV; HDOP también de la GGA. 2 pruebas nuevas en `gps_nmea_test`.
+  - La etiqueta del mapa muestra la altitud.
+  - El simulador trae un cielo de 11 satélites que gira, para ver la pantalla sin el cap.
+  - **Por mirar en el aparato:** qué talkers manda el AT6668 con fix (sin fix sólo mandaba
+    `$GP…`; si manda las demás constelaciones como GN sin id, se reparten por número).
 
 - **0.3.2 (20-nov-2026) — las teclas de letra llegan en el aparato; instalada, sin probar.**
   - En el aparato **sólo llegaban las teclas que traducía la plantilla** (flechas, F/X/T/Z/C,

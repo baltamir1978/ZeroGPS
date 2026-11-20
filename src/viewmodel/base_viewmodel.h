@@ -24,7 +24,7 @@ namespace viewmodel {
 class BaseViewModel {
 public:
     // Entradas del menú Home, en orden de aparición.
-    static constexpr int kMenuCount = 3;
+    static constexpr int kMenuCount = 4;
 
     BaseViewModel();
     ~BaseViewModel();

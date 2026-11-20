@@ -2,7 +2,7 @@
   "app_name": "ZeroGPS",
   "package_name": "zerogps",
   "bin_name": "zerogps",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "GPS with Spain's IGN maps (topographic, satellite, base) for the CardputerZero LoRa+GPS cap",
   "store": {
     "summary": "Record GPX tracks and see them on a live IGN topographic map",

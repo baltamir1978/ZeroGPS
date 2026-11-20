@@ -16,6 +16,8 @@ const char* title_for_page(model::AppPage page) {
     switch (page) {
         case model::AppPage::Map:
             return "Mapa";
+        case model::AppPage::Sky:
+            return "Satélites";
         case model::AppPage::Tracks:
             return "Tracks";
         case model::AppPage::Download:
@@ -82,8 +84,10 @@ model::AppPage BaseViewModel::page_for_menu(int index) {
         case 0:
             return model::AppPage::Map;
         case 1:
-            return model::AppPage::Tracks;
+            return model::AppPage::Sky;
         case 2:
+            return model::AppPage::Tracks;
+        case 3:
         default:
             return model::AppPage::Download;
     }

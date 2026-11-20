@@ -11,7 +11,7 @@ namespace model {
 
 // Número de funciones del menú; sirve de comprobación de que el enum está en orden.
 int tool_count() {
-    return static_cast<int>(AppPage::Download);
+    return static_cast<int>(AppPage::Sky);
 }
 
 } // namespace model
