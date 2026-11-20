@@ -124,6 +124,13 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 
 ## Estado
 
+- **0.5.1 (20-nov-2026) — la app ya no gasta un núcleo entero; instalada.**
+  - En el aparato el hilo de LVGL estaba **siempre al 100 % de un núcleo**: sin
+    `lv_delay_set_cb`, `lv_delay_ms(5)` espera dando vueltas (lo confirmó gdb: todo el tiempo
+    dentro de `lv_delay_ms`). Ahora `app.cpp` da a LVGL `clock_gettime` y `usleep` en el
+    aparato y duerme lo que `lv_timer_handler()` dice que falta (1-50 ms). Viene de la
+    plantilla: **las demás apps del aparato tienen el mismo fallo**.
+
 - **Tienda (20-nov-2026):** 0.5.0 enviada como **IGN GPS** en
   [CardputerZero/packages#568](https://github.com/CardputerZero/packages/pull/568); CI en verde
   (`validate`, `capture`), **esperando la revisión** de un mantenedor (primera publicación).

@@ -2,7 +2,7 @@
   "app_name": "IGN GPS",
   "package_name": "zerogps",
   "bin_name": "zerogps",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "GPS with Spain's IGN maps (topographic, satellite, base), sky view, GPX tracks and offline maps for the Cap LoRa-1262",
   "store": {
     "summary": "GPS with Spain's IGN maps: live position, satellites, GPX tracks, offline",
