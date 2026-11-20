@@ -116,6 +116,14 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 
 ## Estado
 
+- **0.4.1 (20-nov-2026) — zoom con Q / A.**
+  - En el teclado del Cardputer (`linux,keymap*` del tca8418 en el device tree) la capa
+    normal sólo tiene letras, números, Esc, Tab, Enter, espacio, mayúsculas, Ctrl y Alt:
+    `, .` están en la capa de símbolos (sobre 7 y 8), `-` sobre la U y `+` sobre las
+    mayúsculas. Bruno no conseguía hacer zoom: ahora `Q` acerca y `A` aleja. **Para
+    cualquier atajo nuevo, usar letras.** La capa Fn trae las flechas (F/Z/X/C), Fn+H
+    = `KEY_HELP` y Fn+J = `KEY_SYSRQ`.
+
 - **0.4.0 (20-nov-2026) — pantalla de satélites; instalada, sin probar en el aparato.**
   - Entrada nueva «Satélites» en el menú (segunda): cielo con los satélites por
     constelación (relleno = usado, tenue = sin señal, «+N sin situar» los que aún no tienen

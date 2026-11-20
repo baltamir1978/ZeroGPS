@@ -76,7 +76,7 @@ La batería del Cardputer Zero es pequeña, así que la app intenta gastar lo m�
 | | `Esc` / mantener `Esc` | Atrás / salir |
 | Mapa | Flechas (`F` `Z` `X` `C`, con o sin `Fn`) | Mover el mapa |
 | | `ENTER` | Centrar en mi posición |
-| | `+` `-` (o `.` `,`) | Zoom |
+| | `Q` / `A` | Acercar / alejar (también `+` `-` `.` `,` en la capa de símbolos) |
 | | `R` | Grabar / parar track |
 | | `M` | Cambiar de mapa: topográfico, satélite, IGN Base |
 | | `O` | Modo online |
@@ -121,7 +121,7 @@ bajo CC-BY 4.0.
 
 ## Estado
 
-**0.4.0**: pantalla de satélites; tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
+**0.4.1**: pantalla de satélites, zoom con Q/A; tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
 offline y modo online. Probado en el simulador; en el aparato ya se instala y coge posición
 (5 satélites junto a una ventana); falta probar ahí el mapa con teselas y grabar un track. El
 LoRa (SX1262) queda para más adelante.

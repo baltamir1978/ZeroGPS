@@ -32,7 +32,7 @@ constexpr std::array<HelpRow, 4> kHomeRows = {{
 constexpr std::array<HelpRow, 6> kMapRows = {{
     {"Flechas", "Mover el mapa"},
     {"ENTER", "Centrar en mi posición"},
-    {"+ / -", "Zoom (también . y ,)"},
+    {"Q / A", "Acercar / alejar"},
     {"R", "Grabar / parar track"},
     {"M", "Mapa: topo / satélite / base"},
     {"O  ·  D", "Online  ·  descargar zona"},

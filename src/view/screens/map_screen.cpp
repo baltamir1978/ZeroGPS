@@ -156,11 +156,17 @@ bool MapScreen::handle_key(uint32_t key) {
             gps_.map_view().follow = true;
             poll();
             return true;
+        // En el teclado del Cardputer , . + - sólo están en la capa de símbolos: el zoom va
+        // también en Q (acercar) y A (alejar), una encima de la otra.
+        case 'q':
+        case 'Q':
         case '+':
         case '=':
         case '.':
             set_zoom(gps_.map_view().zoom + 1);
             return true;
+        case 'a':
+        case 'A':
         case '-':
         case '_':
         case ',':
