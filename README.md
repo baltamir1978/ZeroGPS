@@ -113,7 +113,7 @@ bajo CC-BY 4.0.
 
 ## Estado
 
-**0.3.1**: tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
-offline y modo online. Probado en el simulador; en el aparato ya se instala y el GNSS manda
-NMEA por `/dev/serial0`, pero falta probar la app con posición real (con antena). El
+**0.3.2**: tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
+offline y modo online. Probado en el simulador; en el aparato ya se instala y coge posición
+(5 satélites junto a una ventana); falta probar ahí el mapa con teselas y grabar un track. El
 LoRa (SX1262) queda para más adelante.

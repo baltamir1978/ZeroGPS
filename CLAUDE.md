@@ -113,6 +113,16 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 
 ## Estado
 
+- **0.3.2 (20-nov-2026) — las teclas de letra llegan en el aparato; instalada, sin probar.**
+  - En el aparato **sólo llegaban las teclas que traducía la plantilla** (flechas, F/X/T/Z/C,
+    4–8, Esc, Enter…): `M`, `O`, `R`, `D` y el zoom no hacían nada, aunque en el simulador
+    (SDL) sí. `map_evdev_key` traduce ahora todas las letras, los números y `, . - = +`. El
+    teclado (`tca8418`) no tiene `KEY_MINUS`/`KEY_EQUAL`: su `-` y su `+` son `KEY_KPMINUS` y
+    `KEY_KPPLUS`. **Arreglo a llevar a ZeroRF-NFC y ZeroTVBGone** si usan más letras.
+  - **Primer fix en el aparato** junto a la ventana (5 satélites); el mapa salía en negro
+    porque el modo online viene apagado y en Madrid no hay teselas incluidas (sólo
+    Guadarrama): con `O` (que ahora llega) se bajan.
+
 - **0.3.1 (20-nov-2026) — nombre y descripción; instalada en el aparato.**
   - En el lanzador (y en la barra de título del menú) pasa a llamarse **IGN GPS**: había
     dos entradas «GPS», la nuestra y la de M5Stack.
@@ -123,8 +133,7 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
     puesta sigue mandando `$GPTXT,...,ANTENNA OPEN` (será que la antena es pasiva y la
     detección no ve consumo: no afecta, la app no lee los TXT). En interior: 3 satélites a
     29–32 dB y hora UTC al minuto y medio, sin fix todavía.
-  - **Pendiente:** abrir la app en el aparato con antena y ver posición en el mapa, grabar
-    un track; lo de las efemérides al cortar los 5V; LoRa.
+  - **Pendiente:** ver el mapa con teselas en el aparato y grabar un track; lo de las efemérides al cortar los 5V; LoRa.
 
 - **0.3.0 (20-nov-2026) — elegir mapa e icono; sin probar en el aparato.**
   - Tres mapas del IGN: topográfico, satélite (PNOA) y IGN Base. `M` en el mapa los cambia
