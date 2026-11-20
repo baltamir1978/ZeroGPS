@@ -22,7 +22,7 @@ const char* title_for_page(model::AppPage page) {
             return "Mapas offline";
         case model::AppPage::Home:
         default:
-            return "GPS";
+            return "IGN GPS";
     }
 }
 

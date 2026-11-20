@@ -71,7 +71,7 @@ HelpPage help_page_for(model::AppPage page) {
             return {"OFFLINE", kDownloadRows.data(), kDownloadRows.size()};
         case model::AppPage::Home:
         default:
-            return {"GPS", kHomeRows.data(), kHomeRows.size()};
+            return {"IGN GPS", kHomeRows.data(), kHomeRows.size()};
     }
 }
 

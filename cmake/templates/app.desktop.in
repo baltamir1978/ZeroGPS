@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=GPS
+Name=IGN GPS
 Comment=@APP_PACKAGE_DESCRIPTION@
 Exec=/usr/bin/@PROJECT_NAME@
 Icon=share/images/zerogps.png

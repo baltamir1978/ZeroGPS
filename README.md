@@ -2,7 +2,7 @@
 
 GPS con mapas topográficos del **IGN** para el **M5Stack Cardputer Zero** (Raspberry Pi CM0,
 pantalla de 320×170, Linux) con el **Cap LoRa-1262** (LoRa SX1262 + GNSS AT6668). En el
-lanzador aparece como **GPS**.
+lanzador aparece como **IGN GPS** (la app de GPS de M5Stack para el cap ya se llama «GPS»).
 
 > **Sólo para España.** Los mapas son del **Instituto Geográfico Nacional de España**: fuera
 > de España (y de lo que cubre el IGN) no hay mapa. La interfaz está en español.
@@ -113,6 +113,7 @@ bajo CC-BY 4.0.
 
 ## Estado
 
-**0.3.0**: tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
-offline y modo online. Probado en el simulador; **sin probar en el aparato** (falta comprobar el GNSS real por `/dev/serial0`). El
+**0.3.1**: tres mapas del IGN (topográfico, satélite y Base), grabación de tracks, mapas
+offline y modo online. Probado en el simulador; en el aparato ya se instala y el GNSS manda
+NMEA por `/dev/serial0`, pero falta probar la app con posición real (con antena). El
 LoRa (SX1262) queda para más adelante.

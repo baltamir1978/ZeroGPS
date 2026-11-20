@@ -10,7 +10,8 @@ funciones:
 - **Mapas offline**: descargar una zona (radio o zona ya hecha, zoom mín./máx., tarjeta) con
   aviso de tamaño y espacio libre.
 
-En el lanzador se llama **GPS**. Qué hace y cómo se usa está en `README.md`; aquí va lo que hace
+En el lanzador se llama **IGN GPS** (la app de M5Stack para el cap, paquete
+`m5cardputerzero-cap-lora-1262-gps`, ya viene instalada y se llama «GPS»). Qué hace y cómo se usa está en `README.md`; aquí va lo que hace
 falta para tocarla.
 
 Es la app hermana de **ZeroRF-NFC** (Cap CC1101+NFC): los dos caps comparten ranura y **no se
@@ -111,6 +112,19 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
   previsto: va sola). Icono: `Tools/generar_icono.py` (mapa plegado con chincheta).
 
 ## Estado
+
+- **0.3.1 (20-nov-2026) — nombre y descripción; instalada en el aparato.**
+  - En el lanzador (y en la barra de título del menú) pasa a llamarse **IGN GPS**: había
+    dos entradas «GPS», la nuestra y la de M5Stack.
+  - La descripción del paquete era la de ZeroTVBGone (venía de la plantilla); ahora es la suya.
+  - **Comprobado en el aparato** (con la 0.3.0): `/dev/serial0` → `ttyS0`, sin consola
+    encima (`console=tty1`), usuario en `dialout`; con los 5V encendidos el AT6668 manda
+    NMEA a 115200 (RMC, VTG, GGA, GSA, GSV, GLL, ZDA, TXT). Con la antena
+    puesta sigue mandando `$GPTXT,...,ANTENNA OPEN` (será que la antena es pasiva y la
+    detección no ve consumo: no afecta, la app no lee los TXT). En interior: 3 satélites a
+    29–32 dB y hora UTC al minuto y medio, sin fix todavía.
+  - **Pendiente:** abrir la app en el aparato con antena y ver posición en el mapa, grabar
+    un track; lo de las efemérides al cortar los 5V; LoRa.
 
 - **0.3.0 (20-nov-2026) — elegir mapa e icono; sin probar en el aparato.**
   - Tres mapas del IGN: topográfico, satélite (PNOA) y IGN Base. `M` en el mapa los cambia
