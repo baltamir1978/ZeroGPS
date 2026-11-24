@@ -109,7 +109,7 @@ Detalle en la memoria `cardputer-caps-hardware`. Numeración **BCM** del CM0:
 ## Versiones y entrega
 
 - Versión en `project(... VERSION x.y.z)` de `CMakeLists.txt` y en `app-builder.json` (a la vez).
-- El `.deb` se copia a `~/Documentos/ZeroGPS-<versión>.deb`, sustituyendo al anterior.
+- El `.deb` se copia a `~/Documentos/Software/ZeroGPS-<versión>.deb`, sustituyendo al anterior.
 - Commit en `main` con mensaje en español que empieza por la versión, y push.
 - **Tienda**: `app-builder.json` es la ficha (`czdev publish --deb dist/…deb`, desde
   `../AppBuilder`; sesión en `~/.czdev/credentials`). Título **IGN GPS** (`app_name`; el
