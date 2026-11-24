@@ -35,8 +35,7 @@ Tools/compilar.sh deb       # dist/ZeroGPS_<versión>_rev1_arm64.deb
 Tools/compilar.sh simulador # abre el simulador en este escritorio (X11)
 ```
 
-- La primera vez descarga LVGL 9.5 y el *sysroot* a `.cache/`. Enlazar/copiar el de otra app del
-  aparato (`../ZeroTVBGone/.cache`) ahorra la descarga.
+- `.cache` es un enlace a `~/.local/share/cardputer-zero-sdk` (LVGL y el *sysroot*, uno por máquina para todas las apps Zero; ver `~/Proyectos/CLAUDE.md`). En un clon nuevo: `mkdir -p ~/.local/share/cardputer-zero-sdk && ln -s ~/.local/share/cardputer-zero-sdk .cache`; si está vacío, la primera compilación lo descarga ahí.
 - **Probar sin pantalla**: simulador bajo `Xvfb` (`SDL_RENDER_DRIVER=software`), teclas con
   `xdotool key --window`, captura con `import -window root` (pantalla en `322x170+286+118` con
   `-screen 0 900x600x24`).
